@@ -1,0 +1,38 @@
+{
+  // PRESET: anti-AI-tell vocabulary and phrasing.
+  // Not auto-loaded — a fragment opts in via "extends".
+  // Maintain the lists here once; every project inheriting the preset
+  // picks up updates. Projects add words via prose.extra_words.
+  "prose": {
+    "forbidden_words": [
+      "delve", "delves", "delving",
+      "leverage", "leverages", "leveraging",
+      "utilize", "utilizes", "utilized", "utilizing", "utilise", "utilises",
+      "robust", "crucial", "pivotal",
+      "streamline", "streamlines",
+      "underscore", "underscores",
+      "multifaceted", "nuanced", "seamlessly",
+      "cutting-edge", "groundbreaking",
+      "facilitate", "facilitates",
+      "showcase", "showcases"
+    ],
+    "banned_phrases": [
+      "paradigm shift",
+      "it is worth noting that",
+      "it is important to note that",
+      "in the realm of",
+      "this is due to the fact that",
+      "as previously mentioned",
+      "in conclusion, it can be said that",
+      "it can be seen that",
+      "it is observed that",
+      "it is clear that",
+      "it is evident that",
+      "it can be concluded that",
+      "it should be noted that",
+      "it is worth emphasising that",
+      "it is worth emphasizing that",
+      "it goes without saying that"
+    ]
+  }
+}

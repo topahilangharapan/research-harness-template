@@ -1,0 +1,12 @@
+{
+  // LaTeX-specific conventions.
+  // Map of forbidden raw commands -> required replacement (regex on the left).
+  // Empty for projects without custom macros; example (UI-thesis style):
+  //   { "forbid": "\\\\textit\\{", "use": "\\f{}" }
+  "latex_commands": [],
+
+  "labels": {
+    "severity": "warn",
+    "prefixes": ["sec:", "subsec:", "fig:", "tab:", "eq:", "lst:", "app:", "ch:"]
+  }
+}

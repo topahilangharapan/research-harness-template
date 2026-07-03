@@ -1,0 +1,18 @@
+{
+  // Identity + what the harness governs.
+  // Fragments in harness/ merge in filename order (numeric prefixes decide).
+  // Lists concatenate across fragments; suffix a key with '=' to REPLACE.
+  "project": {
+    "name": "my-research-paper",
+    // The harness governs ONLY the manuscript being written
+    // (thesis / journal article / conference paper). Rules BLOCK here:
+    "manuscript_paths": ["src/", "paper/"],
+    // OPTIONAL project-specific extension — leave empty in general.
+    // Paths listed here get the same rules as warnings only:
+    "notes_paths": []
+  },
+  "formats": {
+    "latex": true,     // .tex
+    "markdown": true   // .md, .qmd, .Rmd (pandoc citations @key)
+  }
+}

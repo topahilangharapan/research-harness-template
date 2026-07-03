@@ -1,0 +1,46 @@
+{
+  // Manuscript writing workflow: scaffold -> draft -> review -> revise.
+  // The lifecycle skills (.harness/skills/) carry the procedure; the
+  // engine enforces the handoff contract mechanically (marker integrity).
+  "workflow": {
+    // Marker tokens. They live inside comments of the host format
+    // (LaTeX: "% @TODO ...", Markdown: "<!-- @TODO ... -->").
+    // Lines containing a marker are INSTRUCTIONS, not prose — the
+    // validator exempts them from prose rules but tracks their integrity.
+    "markers": {
+      "todo": "@TODO",           // scaffold writing instruction
+      "cite": "@TODOCITE",       // citation needed here
+      "edit": "@EDIT",           // revise instruction: @EDIT[chg-001|REWRITE] ...
+      "original_begin": "==== ORIGINAL {id} ====",
+      "original_end": "==== END ORIGINAL {id} ====",
+      "delete_begin": "==== DELETE {id} ====",
+      "delete_end": "==== END DELETE {id} ===="
+    },
+    // Used by the fix-figure skill to build the manuscript for visual
+    // inspection. Leave empty if the project has no build step.
+    "build_command": "",
+    // Marker severity in normal validation runs. The review skill and
+    // final gates run `validate.py --strict-markers` where any marker
+    // becomes an ERROR (delivered content must contain none).
+    "marker_severity": "warn",
+
+    // Skill auto-activation: when the user's prompt contains one of
+    // these keywords, the per-turn hook injects a hard directive to
+    // invoke that skill — skill triggering no longer depends on the
+    // model noticing on its own. Keys must match .harness/skills/
+    // directory names (the doctor verifies this).
+    "skill_triggers": {
+      "scaffold":       ["scaffold", "outline the", "chapter structure",
+                         "plan the chapter", "plan the section"],
+      "draft":          ["draft", "write section", "write the section",
+                         "fill in the content", "write prose"],
+      "review":         ["review", "audit", "quality check", "verify section"],
+      "revise":         ["revise", "rewrite section", "modify section",
+                         "change section", "expand section", "shorten section"],
+      "fix-figure":     ["fix figure", "fix the figure", "figure overlap",
+                         "diagram broken", "arrows misaligned"],
+      "update-harness": ["update the harness", "harness rule",
+                         "add a rule", "change the policy"]
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "citations": {
+    "bib_files": ["references.bib"],
+    // Allowed BibTeX entry types; [] = allow all types:
+    "allowed_types": ["book", "article", "inproceedings", "incollection"],
+    // Exceptions: a type allowed only for keys with a given prefix, e.g.
+    // { "type": "manual", "key_prefix": "xilinx" }
+    "type_exceptions": [],
+    // Fields every entry of a type MUST carry (anti-fabrication anchor):
+    "required_fields": {
+      "article": ["doi", "journal", "year", "author", "title"],
+      "inproceedings": ["doi", "booktitle", "year", "author", "title"],
+      "book": ["publisher", "year", "author", "title"]
+    },
+    "cite_keys_must_exist": true,   // every \cite / @key must be in a bib file
+    "verify_online": {
+      "enabled": true,               // used by citecheck.py --online (CI)
+      "doi_resolver": "crossref",
+      "isbn_resolver": "openlibrary",
+      "title_match_threshold": 0.75, // fuzzy match fetched title vs bib title
+      "cache_days": 90
+    }
+  }
+}

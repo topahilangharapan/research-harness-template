@@ -1,0 +1,10 @@
+{
+  "protected_paths": {
+    // Editing these is BLOCKED (journal class files, template internals):
+    "deny": ["_internals/", "template/"],
+    // Editing these asks the user for confirmation first:
+    "confirm": ["main.tex"],
+    // Env var that overrides the deny list when the user explicitly asked:
+    "override_env": "ALLOW_PROTECTED"
+  }
+}

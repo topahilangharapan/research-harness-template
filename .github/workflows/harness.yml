@@ -1,0 +1,62 @@
+name: Research Harness
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lint harness config
+        run: python3 .harness/engine/validate.py --check-config
+
+      - name: Harness self-consistency (doctor)
+        run: python3 .harness/engine/doctor.py
+
+      - name: Validate manuscript + bibliography
+        run: python3 .harness/engine/validate.py --all
+
+      - name: Cache citation lookups
+        uses: actions/cache@v4
+        with:
+          path: .harness/cache
+          key: citecheck-${{ hashFiles('**/*.bib') }}
+          restore-keys: citecheck-
+
+      - name: Verify citations online (Crossref / OpenLibrary)
+        run: |
+          ENABLED=$(python3 -c "
+          import sys; sys.path.insert(0, '.harness/engine')
+          from validate import load_config
+          print(load_config('.').get('enforcement', {}).get('ci', {}).get('citations_online', True))")
+          if [ "$ENABLED" = "True" ]; then
+            python3 .harness/engine/citecheck.py --online
+          else
+            echo "citations_online disabled in harness.json"
+          fi
+
+      - name: Block protected-path changes in PRs
+        if: github.event_name == 'pull_request'
+        run: |
+          python3 - <<'PY'
+          import subprocess, sys, os
+          sys.path.insert(0, ".harness/engine")
+          from validate import load_config, norm
+          cfg = load_config(".")
+          deny = cfg.get("protected_paths", {}).get("deny", [])
+          base = os.environ.get("GITHUB_BASE_REF", "main")
+          out = subprocess.run(
+              ["git", "diff", "--name-only", f"origin/{base}...HEAD"],
+              capture_output=True, text=True).stdout.splitlines()
+          bad = [f for f in out for d in deny if norm(f).startswith(norm(d))]
+          if bad:
+              print("::error::PR modifies protected paths:", bad)
+              sys.exit(1)
+          PY

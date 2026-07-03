@@ -1,0 +1,9 @@
+{
+  "scope": {
+    // Full statement — injected into Claude's context every turn:
+    "statement": "DESCRIBE YOUR RESEARCH SCOPE HERE (topic, methods, boundaries).",
+    // Mechanical early-warning: these keywords in manuscript prose => finding.
+    "deny_keywords": [],
+    "severity": "warn"
+  }
+}

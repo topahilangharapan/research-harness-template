@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# Research Harness pre-commit — steps are declared in harness.json
+# (enforcement.pre_commit.checks). Installed by scripts/install-harness.sh.
+set -uo pipefail
+
+REPO="$(git rev-parse --show-toplevel)"
+cd "$REPO"
+
+CHECKS=$(python3 - <<'PY'
+import sys, os
+sys.path.insert(0, os.path.join(".harness", "engine"))
+from validate import load_config
+cfg = load_config(".")
+pc = cfg.get("enforcement", {}).get("pre_commit", {})
+if not pc.get("enabled", True):
+    print("")
+else:
+    print(" ".join(pc.get("checks", [])))
+PY
+)
+
+fail() { echo "✗ harness pre-commit: $1" >&2; exit 1; }
+
+for CHECK in $CHECKS; do
+  case "$CHECK" in
+    branch)
+      B="$(git branch --show-current)"
+      python3 - "$B" <<'PY' || fail "branch gate: create a feature branch first (git checkout -b <prefix><topic>)"
+import sys, os
+sys.path.insert(0, os.path.join(".harness", "engine"))
+from validate import load_config
+cfg = load_config(".")
+g = cfg.get("git", {})
+b = sys.argv[1]
+sys.exit(1 if g.get("enabled", True) and b in g.get("protected_branches", []) else 0)
+PY
+      ;;
+    protected_paths)
+      STAGED=$(git diff --cached --name-only)
+      [ -n "$STAGED" ] && python3 - $STAGED <<'PY' || true
+import sys, os
+sys.path.insert(0, os.path.join(".harness", "engine"))
+from validate import load_config, norm
+cfg = load_config(".")
+pp = cfg.get("protected_paths", {})
+if os.environ.get(pp.get("override_env", "ALLOW_PROTECTED")) == "1":
+    sys.exit(0)
+bad = [f for f in sys.argv[1:]
+       for d in pp.get("deny", []) if norm(f).startswith(norm(d))]
+if bad:
+    print("protected paths staged:", *bad, sep="\n  ", file=sys.stderr)
+    sys.exit(1)
+PY
+      [ $? -ne 0 ] && fail "protected_paths (override: ALLOW_PROTECTED=1 git commit ...)"
+      ;;
+    validate)
+      STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+      if [ -n "$STAGED" ]; then
+        # shellcheck disable=SC2086
+        python3 .harness/engine/validate.py $STAGED || fail "validation errors above"
+      fi
+      ;;
+    citations_offline)
+      python3 .harness/engine/citecheck.py || fail "citation check"
+      ;;
+    citations_online)
+      python3 .harness/engine/citecheck.py --online || fail "online citation verification"
+      ;;
+    doctor)
+      # Harness self-consistency — only when harness surface files are staged
+      if git diff --cached --name-only | grep -qE '^(harness/|\.harness/|\.githooks/|\.github/|scripts/|README\.md|CLAUDE\.md)'; then
+        python3 .harness/engine/doctor.py || fail "harness self-consistency (doctor)"
+      fi
+      ;;
+    *)
+      echo "harness: unknown pre-commit check '$CHECK' (harness.json)" >&2
+      ;;
+  esac
+done
+exit 0

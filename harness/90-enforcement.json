@@ -1,0 +1,34 @@
+{
+  "enforcement": {
+    // Claude Code PostToolUse hook:
+    "post_edit": { "enabled": true, "block_on_error": true },
+    // git pre-commit — checks run in order; add/remove ids to change steps.
+    // Available: branch, protected_paths, validate, citations_offline,
+    //            citations_online, doctor
+    "pre_commit": {
+      "enabled": true,
+      "checks": ["branch", "protected_paths", "validate",
+                 "citations_offline", "doctor"]
+    },
+    // CI:
+    "ci": { "citations_online": true },
+    // Per-turn context digest (anti-forgetting for judgment rules):
+    "digest": {
+      "enabled": true,
+      "extra_lines": []
+    },
+    // Stop gate: when Claude tries to end its turn while modified
+    // manuscript files still have validator ERRORs (e.g. edits made via
+    // bash that bypassed per-edit validation), block and force a fix:
+    "stop_gate": {
+      "block_on_validation_errors": true
+    },
+    // Bash mutation guard: block file-writing shell commands
+    // (sed -i, >, >>, tee, mv, rm, cp, truncate) on protected branches
+    // or touching protected paths — closes the bash bypass around the
+    // Edit/Write hooks:
+    "bash_guard": {
+      "enabled": true
+    }
+  }
+}

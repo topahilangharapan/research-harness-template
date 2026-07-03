@@ -1,0 +1,11 @@
+{
+  "git": {
+    "enabled": true,
+    "protected_branches": ["main", "master"],
+    "require_feature_branch": true,          // block file edits on protected branches
+    "branch_prefixes": ["feat/", "fix/", "refactor/", "chore/", "draft/"],
+    "forbid_bulk_add": true,                 // block `git add .` / -A / --all
+    "block_commit_on_protected": true,
+    "commit_trailer": "Co-authored-by: Claude <noreply@anthropic.com>"
+  }
+}

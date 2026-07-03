@@ -1,0 +1,16 @@
+# harness runtime cache (citation lookups)
+.harness/cache/
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# local Claude settings (per-user permissions)
+.claude/settings.local.json

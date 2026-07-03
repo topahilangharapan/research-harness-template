@@ -1,0 +1,145 @@
+{
+  // PRESET: human-quality writing — machine-tell suppression.
+  // Source basis: Wikipedia "Signs of AI writing" (WP:AISIGNS), inverted
+  // into enforcement rules. Opt-in via "extends" (see 30-prose.json).
+  //
+  // Three tiers:
+  //   forbidden_words  -> ERROR in manuscript (no legitimate academic use)
+  //   suspect_words    -> always WARN (legitimate technical uses exist:
+  //                       "rich" in feature-rich, "key" register, "align
+  //                       with the clock edge" — reviewer judges)
+  //   banned_patterns  -> ERROR: whole constructions, not words
+  //
+  // Judgment rules that CANNOT be pattern-matched (rule-of-three
+  // avoidance, significance inflation, legacy padding, promotional tone,
+  // commit-to-specifics) live in the draft/review skills and the digest.
+
+  "prose": {
+    "forbidden_words": [
+      // clusters strongly in machine text, no academic-prose use:
+      "tapestry", "vibrant", "bustling",
+      "meticulous", "meticulously",
+      "boasts", "boasting", "garner", "garners",
+      "bolster", "bolsters", "bolstered",
+      "foster", "fosters", "fostering",
+      "elevate", "elevates", "elevating",
+      "unlock", "unlocks", "unleash", "unleashes",
+      "embark", "embarks", "embarking",
+      "enduring", "ever-evolving", "ever-changing", "rapidly evolving",
+      "profound", "profoundly", "paramount",
+      "holistic", "intricate", "intricacies", "interplay",
+      "vital", "innovative", "transformative",
+      "revolutionize", "revolutionizes", "game-changing",
+      "synergy", "state-of-the-art",
+      "enhance", "enhances", "enhancing"
+    ],
+    "suspect_words": [
+      // legitimate literal/technical meanings exist -> density-governed
+      // (base lemmas only: with density.families on, inflections like
+      //  highlights/highlighting fold into 'highlight' automatically):
+      "landscape", "realm", "journey", "navigate",
+      "rich", "key", "notably", "additionally", "furthermore", "moreover",
+      "overall", "ultimately", "highlight", "emphasize", "emphasise",
+      "align with", "concrete"
+    ],
+    "banned_phrases": [
+      "a testament to", "testament to the",
+      "it's important to note", "it is important to highlight",
+      "in today's world", "in the digital age", "in the modern era",
+      "in conclusion",
+      "plays a significant role", "plays a crucial role",
+      "plays a pivotal role", "plays a vital role",
+      "stands as a", "serves as a", "marks a significant",
+      "a wide range of", "a variety of",
+      "rich history", "rich cultural heritage",
+      "nestled in the heart of", "must-see",
+      "continues to captivate", "leaves a lasting impact",
+      "lasting legacy",
+      "widely regarded as", "widely considered",
+      "due to the fact that", "in order to", "prior to"
+    ],
+    "banned_patterns": [
+      {
+        "id": "P-NOTJUST",
+        "pattern": "\\bnot\\s+(just|only|merely)\\b[^.;]{0,90}\\bbut(\\s+also)?\\b",
+        "severity": "error",
+        "message": "negative parallelism ('not just X, but Y') — a machine skeleton; state the point directly"
+      },
+      {
+        "id": "P-ITSNOT",
+        "pattern": "\\bit\\s+is(n't| not)\\s+(about\\s+)?[^.;]{0,60}[;,-][^.;]{0,60}\\bit\\s+is\\b",
+        "severity": "warn",
+        "message": "'it's not X; it's Y' construction — machine skeleton; state the point directly"
+      },
+      {
+        "id": "P-NONOJUST",
+        "pattern": "\\bno\\s+\\w+,\\s+no\\s+\\w+,\\s+just\\b",
+        "severity": "error",
+        "message": "'no X, no Y, just Z' construction — machine skeleton"
+      },
+      {
+        "id": "P-INGCLAUSE",
+        "pattern": ",\\s+(highlighting|underscoring|reflecting|demonstrating|showcasing|emphasi[sz]ing|cementing|solidifying|signaling|signalling|illustrating|reinforcing|underlining|paving\\s+the\\s+way)\\b[^.]*\\.?\\s*$",
+        "severity": "error",
+        "message": "trailing '-ing' significance clause — end the sentence at the fact"
+      },
+      {
+        "id": "P-COPULA",
+        "pattern": "\\b(serves|stands|functions)\\s+as\\b",
+        "severity": "error",
+        "message": "copula swap — write 'is/are/has' instead of 'serves as / stands as / functions as'"
+      },
+      {
+        "id": "P-WEASEL",
+        "pattern": "\\b(experts|critics|scholars|observers|analysts|many)\\s+(believe|argue|say|suggest|note|contend|consider)\\b",
+        "severity": "error",
+        "message": "weasel attribution — name who, with a citation, or cut the claim"
+      },
+      {
+        "id": "P-OPENER",
+        "pattern": "^\\s*(Additionally|Furthermore|Moreover|Overall|Ultimately),",
+        "severity": "warn",
+        "message": "stock sentence opener — connect the thought concretely or start with the subject"
+      }
+    ]
+  },
+
+  // Markdown formatting tells (apply to .md/.qmd manuscript files):
+  "custom_rules": [
+    {
+      "id": "MD-BOLDBULLET",
+      "glob": "*.md",
+      "pattern": "^\\s*[-*+]\\s+\\*\\*[^*]+\\*\\*",
+      "severity": "error",
+      "message": "bullet-with-bold-header pattern — use plain items or convert to prose"
+    },
+    {
+      "id": "MD-BOLDBULLET-QMD",
+      "glob": "*.qmd",
+      "pattern": "^\\s*[-*+]\\s+\\*\\*[^*]+\\*\\*",
+      "severity": "error",
+      "message": "bullet-with-bold-header pattern — use plain items or convert to prose"
+    },
+    {
+      "id": "MD-HRULE",
+      "glob": "*.md",
+      "pattern": "^\\s*(-{3,}|\\*{3,}|_{3,})\\s*$",
+      "severity": "warn",
+      "message": "horizontal rule / thematic break — remove; headings structure the document"
+    },
+    {
+      "id": "MD-EMOJI",
+      "glob": "*.md",
+      "pattern": "[\\U0001F300-\\U0001FAFF\\u2705\\u274C\\u2728\\u2B50\\u2757\\u26A0]",
+      "severity": "error",
+      "message": "emoji in manuscript prose"
+    },
+    {
+      "id": "MD-TITLECASE",
+      "glob": "*.md",
+      "pattern": "^#{1,6}\\s+(?:[A-Z][a-z]+\\s+){2,}[A-Z][a-z]+\\s*$",
+      "severity": "warn",
+      "message": "heading looks Title Case — use sentence case ('Early life and career')"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  // Word/phrase lists live in the presets (shared, updatable in one place);
+  // this fragment holds project-level knobs and additions.
+  //   prose-anti-ai.json  — core forbidden vocabulary and phrases
+  //   human-writing.json  — WP:AISIGNS machine-tell suppression
+  //                         (constructions, suspect words, md formatting)
+  "extends": ["presets/prose-anti-ai.json", "presets/human-writing.json"],
+
+  "prose": {
+    "severity_in_manuscript": "error",
+    // Only relevant if project.notes_paths is used:
+    "severity_in_notes": "warn",
+    "forbid_em_dash": true,
+    // Project-specific additions on top of the preset:
+    "extra_words": [],
+
+    // DENSITY POLICY for suspect_words (words that are legitimate in
+    // isolation but a machine tell when they cluster). Deterministic:
+    // occurrence counting against hard allowances per scope.
+    //   paragraph = blank-line delimited block
+    //   section   = \section{} (LaTeX) or #/## heading (Markdown)
+    //   file      = the whole file
+    //   chapter   = all scanned files in the same directory
+    //               (checked when 2+ files of a directory are scanned
+    //               together: --all, pre-commit, CI, stop gate)
+    "density": {
+      // "rate": limits are per 1000 words of the scope; the effective
+      //         allowance = max(min_allowance, ceil(rate * words/1000)).
+      //         A long chapter earns a larger budget than a short one.
+      // "count": limits are absolute occurrence counts.
+      "mode": "rate",
+      "min_allowance": 1,
+      // Occurrences of the SAME suspect lemma, per 1000 words:
+      "per_word":  { "paragraph": 10, "section": 5, "file": 3, "chapter": 1.6 },
+      // Total suspect-word occurrences (any lemmas), per 1000 words:
+      "aggregate": { "paragraph": 30, "section": 13, "file": 9, "chapter": 5 },
+      // Word families: 'highlight' also counts highlights/highlighting —
+      // inflections fold into one lemma, so variant-shuffling cannot
+      // dodge the counter:
+      "families": true,
+      // Findings below every allowance: "off" (silent) or "warn":
+      "under_limit": "off",
+      // Findings above an allowance (manuscript; notes downgrade):
+      "over_limit": "error"
+    }
+  }
+}
