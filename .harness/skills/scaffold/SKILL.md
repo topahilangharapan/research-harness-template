@@ -44,7 +44,16 @@ text later.
    paper/ch2/sec-related-work.tex   % ONE \section + its @TODO briefs
    paper/ch2/sec-methodology.tex
    paper/ch2/sec-summary.tex
+   paper/ch2/fig-datapath.tex   % one float per file: figure env with
+                                %   \includegraphics + \caption + \label
+   paper/ch2/fig-datapath.png   % image binaries CO-LOCATED in the
+                                %   chapter dir, beside their section
    ```
+
+   Plan figure/table slots as `fig-<slug>.tex` wrapper files that the
+   section `\input`s. Image binaries the user must supply are BLOCKERS
+   for the draft skill — the validator refuses \includegraphics
+   targets that do not exist (L-GRAPHIC).
 
    Each section gets `@TODO` instruction markers (inside comments of the
    host format) and `@TODOCITE` where a citation will be needed. Also

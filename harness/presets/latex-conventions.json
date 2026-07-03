@@ -31,7 +31,15 @@
     "require_caption": true,
     "require_label": true,
     "graphics_in_float": true,
-    "severity": "error"
+    "severity": "error",
+    // \includegraphics targets must EXIST (shelf philosophy: you cannot
+    // include an image the user never added):
+    "graphics_exist": "error",
+    // assets should live beside the section that discusses them
+    // (paper/ch2/fig-x.png next to paper/ch2/sec-*.tex):
+    "graphics_colocate": "warn",
+    // extra roots if the project uses \graphicspath:
+    "graphics_paths": []
   },
 
   "latex_xref": {

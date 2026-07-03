@@ -570,6 +570,46 @@ def check_modularity(rel, text, cfg, findings):
             "of \\input calls"))
 
 
+GRAPHIC_EXTS = ("", ".pdf", ".png", ".jpg", ".jpeg", ".eps", ".svg")
+
+
+def check_graphic(rel, target, n, fl, findings):
+    """\\includegraphics target must exist (an image the user never
+    added cannot be included — same shelf philosophy as citations), and
+    should live beside the section that uses it (co-location)."""
+    root = repo_root()
+    exist_sev = fl.get("graphics_exist", "error")
+    if exist_sev == "off":
+        return
+    tex_dir = os.path.dirname(rel)
+    bases = [".", tex_dir] + fl.get("graphics_paths", [])
+    resolved = None
+    for b in bases:
+        for ext in GRAPHIC_EXTS:
+            cand = os.path.normpath(os.path.join(root, b, target + ext))
+            if os.path.isfile(cand):
+                resolved = os.path.relpath(cand, root)
+                break
+        if resolved:
+            break
+    if not resolved:
+        findings.append(Finding(
+            exist_sev, "L-GRAPHIC", rel, n,
+            f"\\includegraphics{{{target}}}: image file not found (tried "
+            f"relative to repo root, '{tex_dir}/', and graphics_paths) — "
+            "ask the user to add the image beside its section; do not "
+            "reference images that do not exist"))
+        return
+    co_sev = fl.get("graphics_colocate", "warn")
+    if co_sev != "off" and tex_dir and \
+            not norm(resolved).startswith(norm(tex_dir) + "/"):
+        findings.append(Finding(
+            co_sev, "L-GRAPHIC", rel, n,
+            f"image '{resolved}' lives outside this section's directory "
+            f"'{tex_dir}/' — co-locate assets with the section that "
+            "discusses them"))
+
+
 def check_latex_structure(rel, text, cfg, findings, xref_acc):
     """Float integrity (caption+label per figure/table env, no stray
     \\includegraphics) and label/ref collection for corpus-level
@@ -605,6 +645,10 @@ def check_latex_structure(rel, text, cfg, findings, xref_acc):
                 sev, "L-FLOAT", rel, n,
                 "\\includegraphics outside a figure/table environment — "
                 "wrap it in a float with \\caption and \\label"))
+        if fl.get("enabled", True):
+            for gm in re.finditer(
+                    r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", line):
+                check_graphic(rel, gm.group(1), n, fl, findings)
         for lm in LABEL_RE.finditer(line):
             name = lm.group(1)
             if name in labels_here:
