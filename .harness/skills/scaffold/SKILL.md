@@ -34,10 +34,21 @@ text later.
    headings with their labels (use the configured prefixes), the
    source(s) supporting each part, planned figures/tables with labels,
    and the exact file paths to be created.
-6. **Execute.** Only after approval, create the files. Each section gets
-   `@TODO` instruction markers (inside comments of the host format) and
-   `@TODOCITE` where a citation will be needed. Follow any structure
-   rules the project declares in `harness/rules.d/`.
+6. **Execute.** Only after approval, create the files — MODULAR, never
+   monolithic. For LaTeX the layout is one directory per chapter, one
+   sub-file per section, a root file of structure only (the validator's
+   `latex_modularity` check blocks anything else):
+
+   ```
+   paper/ch2/ch2.tex            % ROOT: \chapter{...} + \input calls ONLY
+   paper/ch2/sec-related-work.tex   % ONE \section + its @TODO briefs
+   paper/ch2/sec-methodology.tex
+   paper/ch2/sec-summary.tex
+   ```
+
+   Each section gets `@TODO` instruction markers (inside comments of the
+   host format) and `@TODOCITE` where a citation will be needed. Also
+   follow any structure rules in `harness/rules.d/` and `file_shapes`.
 7. **Report.** List files created, labels assigned, source coverage, and
    remaining gaps. The validator runs automatically on each file you
    write; fix anything it blocks.

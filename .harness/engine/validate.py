@@ -173,7 +173,8 @@ def load_config(root):
 KNOWN_TOP_KEYS = {"project", "formats", "git", "protected_paths", "prose",
                   "latex_commands", "labels", "scope", "citations",
                   "custom_rules", "enforcement", "workflow",
-                  "file_shapes", "latex_floats", "latex_xref"}
+                  "file_shapes", "latex_floats", "latex_xref",
+                  "latex_modularity"}
 SEVERITIES = {"error", "warn", "off"}
 
 
@@ -226,6 +227,7 @@ def check_config(root, cfg):
         if s.get("severity", "error") not in SEVERITIES:
             probs.append(f"file_shapes[{sid}].severity invalid")
     for key, fields in (("latex_floats", ("severity",)),
+                        ("latex_modularity", ("severity",)),
                         ("latex_xref", ("duplicates", "unknown_refs",
                                         "unreferenced_floats"))):
         blk = cfg.get(key, {})
@@ -511,6 +513,61 @@ def check_file_shapes(rel, text, cfg, findings):
                 findings.append(Finding(
                     sev, sid, rel, 0,
                     f"required pattern '{p}' missing from this file"))
+
+
+ROOT_ALLOWED = re.compile(
+    r"^\s*\\(chapter|input|include|label|usetikzlibrary|graphicspath|"
+    r"clearpage|newpage|cleardoublepage)\b")
+
+
+def check_modularity(rel, text, cfg, findings):
+    """Glob-free modular-writing contract (works whatever path the AI
+    invents for a file):
+      1. A file containing \\chapter is a chapter ROOT: it may hold only
+         structural commands (\\chapter, \\input, \\label, ...) — no
+         \\section, no prose.
+      2. No file may contain 2+ \\section commands — that is a monolith;
+         each section lives in its own sub-file, pulled in by \\input.
+    """
+    mod = cfg.get("latex_modularity", {})
+    if not mod.get("enabled", False):
+        return
+    sev = mod.get("severity", "error")
+    max_sec = int(mod.get("max_sections_per_file", 1))
+    has_chapter = False
+    section_lines = []
+    prose_lines = []
+    for n, raw in enumerate(text.splitlines(), 1):
+        line = strip_latex_comment(raw)
+        if not line.strip():
+            continue
+        if re.search(r"\\chapter\*?\{", line):
+            has_chapter = True
+        if re.search(r"\\section\*?\{", line):
+            section_lines.append(n)
+        if has_chapter and not ROOT_ALLOWED.match(line):
+            prose_lines.append(n)
+    if has_chapter and mod.get("chapter_root_only", True):
+        if section_lines:
+            findings.append(Finding(
+                sev, "L-MODULAR", rel, section_lines[0],
+                "file contains \\chapter AND \\section — a chapter file is "
+                "a ROOT holding only \\chapter and \\input{} calls; each "
+                "section goes in its own sub-file (e.g. "
+                "ch2/sec-related-work.tex) pulled in with \\input"))
+        if prose_lines:
+            findings.append(Finding(
+                sev, "L-MODULAR", rel, prose_lines[0],
+                f"prose/content in a chapter root file ({len(prose_lines)} "
+                "line(s)) — move it into \\input'd sub-files; the root "
+                "holds structure only"))
+    elif len(section_lines) > max_sec:
+        findings.append(Finding(
+            sev, "L-MODULAR", rel, section_lines[max_sec],
+            f"{len(section_lines)} \\section commands in one file "
+            f"(max {max_sec}) — monolithic chapter writing; split into "
+            "one sub-file per section (sec-<slug>.tex) with a root file "
+            "of \\input calls"))
 
 
 def check_latex_structure(rel, text, cfg, findings, xref_acc):
@@ -984,8 +1041,10 @@ def check_file(root, path, cfg, findings, bib_keys, chapter_acc=None,
         return  # outside manuscript/notes => not prose
     text = open(path, encoding="utf-8", errors="replace").read()
     check_file_shapes(rel.replace(os.sep, "/"), text, cfg, findings)
-    if kind == "tex" and xref_acc is not None:
-        check_latex_structure(rel, text, cfg, findings, xref_acc)
+    if kind == "tex":
+        check_modularity(rel, text, cfg, findings)
+        if xref_acc is not None:
+            check_latex_structure(rel, text, cfg, findings, xref_acc)
     fw = check_prose_file(root, rel, text, kind, zone, cfg, findings, bib_keys)
     if chapter_acc is not None and zone == "manuscript" and fw is not None:
         d = os.path.dirname(rel.replace(os.sep, "/"))

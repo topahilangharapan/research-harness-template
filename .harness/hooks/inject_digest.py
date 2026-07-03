@@ -68,6 +68,11 @@ lines.append("4. Prose: no em-dashes, no forbidden AI vocabulary, no machine "
              "repetition over synonym rotation, no significance inflation "
              "or legacy padding, one precise checkable fact beats three "
              "generalities.")
+if cfg.get("latex_modularity", {}).get("enabled"):
+    lines.append("4b. MODULAR LaTeX: one directory per chapter; root file "
+                 "= \\chapter + \\input calls only; ONE \\section per "
+                 "sub-file. Never write a monolithic chapterN.tex — the "
+                 "validator blocks it.")
 if cfg.get("workflow", {}).get("markers"):
     lines.append("5. Workflow: scaffold -> draft -> review; changes to "
                  "written content go through revise (markers), never "

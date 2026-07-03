@@ -22,7 +22,12 @@ re-checks each file you touch, automatically, and blocks violations.
    `workflow.markers`.
 2. **Intake.** If the target section/file and scope (just this section,
    or its subsections too) are not specified, ask and wait.
-3. **Read the target.** Every `@TODO` is an authoritative writing brief.
+3. **Read the target.** If no scaffold exists yet (you are asked to
+   "draft chapter 2" from nothing), do NOT create a monolithic file —
+   run the scaffold step first: one directory per chapter, root file
+   with `\chapter` + `\input` only, one `\section` per sub-file (the
+   validator blocks monoliths regardless). Then draft sub-file by
+   sub-file. Every `@TODO` is an authoritative writing brief.
    Detect edit mode: any `@EDIT` markers or ORIGINAL/DELETE blocks mean
    this file came from the revise skill — announce the marker count and
    process them in change-id order.

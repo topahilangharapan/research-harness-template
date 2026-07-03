@@ -13,6 +13,19 @@
   // Modular file-shape contracts are project-layout-specific: declare
   // them in 60-latex.json under "file_shapes" (example there).
 
+  // MODULAR WRITING — glob-free, so it applies to any file the AI
+  // creates, whatever the path:
+  //   * a file containing \chapter is a ROOT: \chapter + \input{} only
+  //     (no \section, no prose)
+  //   * max one \section per file — 2+ means a monolith; each section
+  //     lives in its own sub-file (e.g. ch2/sec-related-work.tex)
+  "latex_modularity": {
+    "enabled": true,
+    "chapter_root_only": true,
+    "max_sections_per_file": 1,
+    "severity": "error"
+  },
+
   "latex_floats": {
     "enabled": true,
     "require_caption": true,
