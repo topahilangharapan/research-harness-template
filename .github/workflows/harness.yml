@@ -20,6 +20,9 @@ jobs:
       - name: Harness self-consistency (doctor)
         run: python3 .harness/engine/doctor.py
 
+      - name: Enforcement self-test (every rule family must block)
+        run: python3 .harness/engine/selftest.py
+
       - name: Validate manuscript + bibliography
         run: python3 .harness/engine/validate.py --all
 
