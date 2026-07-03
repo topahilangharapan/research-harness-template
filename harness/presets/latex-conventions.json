@@ -23,6 +23,11 @@
     "enabled": true,
     "chapter_root_only": true,
     "max_sections_per_file": 1,
+    // section-as-directory: each section lives in its own folder
+    // (paper/ch2/sec-alu/sec-alu.tex) with its figures, listings, and
+    // image binaries beside it — delete the folder, the section and
+    // all its assets go together:
+    "section_in_own_dir": true,
     "severity": "error"
   },
 

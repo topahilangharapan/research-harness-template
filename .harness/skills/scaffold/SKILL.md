@@ -40,20 +40,25 @@ text later.
    `latex_modularity` check blocks anything else):
 
    ```
-   paper/ch2/ch2.tex            % ROOT: \chapter{...} + \input calls ONLY
-   paper/ch2/sec-related-work.tex   % ONE \section + its @TODO briefs
-   paper/ch2/sec-methodology.tex
-   paper/ch2/sec-summary.tex
-   paper/ch2/fig-datapath.tex   % one float per file: figure env with
-                                %   \includegraphics + \caption + \label
-   paper/ch2/fig-datapath.png   % image binaries CO-LOCATED in the
-                                %   chapter dir, beside their section
+   paper/ch2/ch2.tex                    % ROOT: \chapter + \input calls ONLY
+   paper/ch2/sec-related-work/
+   │   └── sec-related-work.tex         % ONE \section + its @TODO briefs
+   paper/ch2/sec-mano-overview/
+   │   ├── sec-mano-overview.tex        % the section prose
+   │   ├── fig-mano-datapath.tex        % one float per file: figure env
+   │   │                                %   + \includegraphics + \caption
+   │   │                                %   + \label
+   │   └── fig-mano-datapath.png        % image binary, co-located
+   └── ...
    ```
 
-   Plan figure/table slots as `fig-<slug>.tex` wrapper files that the
-   section `\input`s. Image binaries the user must supply are BLOCKERS
-   for the draft skill — the validator refuses \includegraphics
-   targets that do not exist (L-GRAPHIC).
+   Section-as-directory (enforced: `section_in_own_dir`): every section
+   lives in a folder named after itself, and EVERYTHING it owns —
+   figure wrappers, listings, image binaries — lives inside that
+   folder. Plan figure/table slots as `fig-<slug>.tex` wrapper files
+   that the section `\input`s. Image binaries the user must supply are
+   BLOCKERS for the draft skill — the validator refuses
+   \includegraphics targets that do not exist (L-GRAPHIC).
 
    Each section gets `@TODO` instruction markers (inside comments of the
    host format) and `@TODOCITE` where a citation will be needed. Also

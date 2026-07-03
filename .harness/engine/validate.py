@@ -568,6 +568,16 @@ def check_modularity(rel, text, cfg, findings):
             f"(max {max_sec}) — monolithic chapter writing; split into "
             "one sub-file per section (sec-<slug>.tex) with a root file "
             "of \\input calls"))
+    elif section_lines and mod.get("section_in_own_dir", False):
+        # section-as-directory: sec-<slug>/sec-<slug>.tex, assets beside it
+        stem = os.path.splitext(os.path.basename(rel))[0]
+        parent = os.path.basename(os.path.dirname(rel))
+        if parent != stem:
+            findings.append(Finding(
+                sev, "L-MODULAR", rel, section_lines[0],
+                f"section file '{stem}.tex' must live in its own "
+                f"directory: .../{stem}/{stem}.tex (assets — figures, "
+                "listings, images — co-locate inside that folder)"))
 
 
 GRAPHIC_EXTS = ("", ".pdf", ".png", ".jpg", ".jpeg", ".eps", ".svg")
