@@ -133,7 +133,10 @@ def main():
                      "not be modified. If the user explicitly asked, rerun "
                      f"with {pp.get('override_env', 'ALLOW_PROTECTED')}=1.")
 
-    if git.get("enabled", True) and git.get("require_feature_branch", True):
+    exempt = any(rel.startswith(norm(x)) for x in
+                 git.get("exempt_paths", []))
+    if git.get("enabled", True) and git.get("require_feature_branch", True) \
+            and not exempt:
         b = branch(root)
         if b in prot:
             deny(f"BLOCKED by harness (git.require_feature_branch): you are "

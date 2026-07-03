@@ -39,6 +39,8 @@
                          "change section", "expand section", "shorten section"],
       "fix-figure":     ["fix figure", "fix the figure", "figure overlap",
                          "diagram broken", "arrows misaligned"],
+      "defend":         ["grill me", "defend", "viva", "defense prep",
+                         "mock exam", "quiz me"],
       "update-harness": ["update the harness", "harness rule",
                          "add a rule", "change the policy"]
     }

@@ -134,6 +134,7 @@ runs `--strict-markers` where any leftover marker is an error):
 | `review` | Read-only audit: mechanical pass (validator + citecheck) + judgment pass, then one-by-one interactive triage | No (mechanical fixes only after triage approval) |
 | `revise` | Plan changes to EXISTING content: place @EDIT markers, preserve originals | No — markers only |
 | `fix-figure` | Render → visually inspect → fix → re-render loop for diagrams (build command from `harness/70-workflow.json`) | No |
+| `defend` | Defense examiner: grills you on your manuscript with grounded questions (3 escalating personas), grades answers, tracks readiness via the coverage engine (`.harness/engine/grillmap.py`) | No — records coverage only |
 | `update-harness` | Change the harness itself, doctor-verified | — |
 
 The cycle: **scaffold → draft → review**, then **revise → draft → review**

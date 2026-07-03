@@ -6,6 +6,10 @@
     "branch_prefixes": ["feat/", "fix/", "refactor/", "chore/", "draft/"],
     "forbid_bulk_add": true,                 // block `git add .` / -A / --all
     "block_commit_on_protected": true,
-    "commit_trailer": "Co-authored-by: Claude <noreply@anthropic.com>"
+    "commit_trailer": "Co-authored-by: Claude <noreply@anthropic.com>",
+    // Paths where the BRANCH GATE does not apply (protected_paths still
+    // does): working notes and session state (e.g. defense coverage)
+    // may be written on any branch:
+    "exempt_paths": ["notes/"]
   }
 }
