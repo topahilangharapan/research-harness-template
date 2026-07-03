@@ -16,9 +16,17 @@
       "delete_begin": "==== DELETE {id} ====",
       "delete_end": "==== END DELETE {id} ===="
     },
-    // Used by the fix-figure skill to build the manuscript for visual
-    // inspection. Leave empty if the project has no build step.
-    "build_command": "",
+    // Versioned builds (scripts/build.sh -> .harness/engine/build.py).
+    // Every build lands in {dir}/<YYYY-MM-DD_HHMMSS>_v<N>/ with the PDF,
+    // build.log, and manifest.json (git commit, validation status).
+    // validate_first is THE GATE: no PDF from a manuscript that fails
+    // the validator (--force overrides loudly, recorded in manifest).
+    "build": {
+      "command": "latexmk -pdf -interaction=nonstopmode -output-directory={out} {main}",
+      "main": "main.tex",
+      "dir": "build/",
+      "validate_first": true
+    },
     // Marker severity in normal validation runs. The review skill and
     // final gates run `validate.py --strict-markers` where any marker
     // becomes an ERROR (delivered content must contain none).

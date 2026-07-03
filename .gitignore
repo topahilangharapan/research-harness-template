@@ -1,6 +1,9 @@
 # harness runtime cache (citation lookups)
 .harness/cache/
 
+# build artifacts (versioned folders with PDFs, logs, manifests)
+build/
+
 # LaTeX build artifacts
 *.aux
 *.log

@@ -18,11 +18,13 @@ the rendered output, twice.
 
 1. **Intake.** Identify the figure: label, file path, or caption text.
    Resolve to the source file (search the manuscript tree for the label).
-2. **Build command.** Read `workflow.build_command` from the harness
-   config (`python3 .harness/engine/validate.py --show-config`). If it
-   is empty, ask the user how the manuscript (or the standalone figure)
-   is compiled, and suggest saving it to `harness/70-workflow.json` so
-   the next run needs no question.
+2. **Build.** Use the harness builder:
+   `python3 .harness/engine/build.py --force` (figure-repair builds may
+   run on a manuscript that still has validation findings — that is the
+   documented use of --force). The PDF lands in the newest
+   `build/<timestamp>_v<N>/` folder. If `workflow.build.command` or
+   `main` is unset for this project, ask the user and save it to
+   `harness/70-workflow.json` so the next run needs no question.
 3. **Project precision rules.** If the project keeps a figure-conventions
    document (check the project docs and `harness/rules.d/`), read it and
    apply its rules. If a fix reveals a convention gap, propose adding a
