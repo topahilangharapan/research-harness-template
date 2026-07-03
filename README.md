@@ -168,6 +168,22 @@ doctor enforces the postcondition. Run it manually any time:
 python3 .harness/engine/doctor.py
 ```
 
+## Building the PDF
+
+`bash scripts/build.sh [--strict|--force]` — every build lands in
+`build/<YYYY-MM-DD_HHMMSS>_v<N>/` with the PDF, `build.log`, and a
+`manifest.json` (git commit, validation status). The builder refuses to
+compile a manuscript that fails validation (`--force` overrides loudly
+and is recorded). Configure the compile command and main file in
+`harness/70-workflow.json` → `workflow.build`.
+
+**IDE ▶ button** (installed by `scripts/install-harness.sh` from
+`.harness/ide/`): IntelliJ gets "Build PDF" / "strict" / "force draft"
+run configurations in the ▶ dropdown; VS Code gets build tasks
+(Cmd/Ctrl+Shift+B runs the gated build) plus LaTeX Workshop recipes so
+the extension's build button goes through the harness gate. Reopen the
+IDE after installing.
+
 ## Manual runs
 
 ```bash

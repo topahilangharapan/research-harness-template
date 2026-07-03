@@ -1,0 +1,20 @@
+{
+  // LaTeX Workshop: route the extension's build button ("Build LaTeX
+  // project" ▶) through the harness-gated builder, so IDE builds get
+  // the same validation gate and versioned build/ folders.
+  "latex-workshop.latex.recipes": [
+    { "name": "Harness build (gated)", "tools": ["harness-build"] },
+    { "name": "Harness build (strict)", "tools": ["harness-build-strict"] },
+    { "name": "Harness build (force draft)", "tools": ["harness-build-force"] }
+  ],
+  "latex-workshop.latex.tools": [
+    { "name": "harness-build", "command": "bash",
+      "args": ["scripts/build.sh"], "env": {} },
+    { "name": "harness-build-strict", "command": "bash",
+      "args": ["scripts/build.sh", "--strict"], "env": {} },
+    { "name": "harness-build-force", "command": "bash",
+      "args": ["scripts/build.sh", "--force"], "env": {} }
+  ],
+  "latex-workshop.latex.autoBuild.run": "never",
+  "latex-workshop.latex.recipe.default": "first"
+}

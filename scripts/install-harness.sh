@@ -30,6 +30,15 @@ mkdir -p .claude/skills
 cp -R .harness/skills/. .claude/skills/
 echo "  ✓ skills -> .claude/skills/"
 
+# IDE integration: build ▶ buttons for IntelliJ and VS Code
+mkdir -p .idea/runConfigurations .vscode
+cp .harness/ide/idea/runConfigurations/*.xml .idea/runConfigurations/
+for f in tasks.json settings.json extensions.json; do
+  # don't clobber user-customized VS Code files
+  [ -f ".vscode/$f" ] || cp ".harness/ide/vscode/$f" ".vscode/$f"
+done
+echo "  ✓ IDE run configs -> .idea/runConfigurations + .vscode (reopen IDE)"
+
 # Slash-command wrappers: guarantee /scaffold, /draft, ... work
 mkdir -p .claude/commands
 for d in .harness/skills/*/; do

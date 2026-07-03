@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build PDF (harness-gated)",
+      "type": "shell",
+      "command": "bash scripts/build.sh",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build PDF (strict, submission)",
+      "type": "shell",
+      "command": "bash scripts/build.sh --strict",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build PDF (force draft)",
+      "type": "shell",
+      "command": "bash scripts/build.sh --force",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Harness: validate all",
+      "type": "shell",
+      "command": "python3 .harness/engine/validate.py --all",
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}
