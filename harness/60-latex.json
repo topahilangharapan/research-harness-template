@@ -34,5 +34,20 @@
   //     ],
   //     "severity": "error" }
   // ]
-  "file_shapes": []
+  "file_shapes": [
+    { "id": "chapter-root", "glob": "paper/ch[0-9]*/ch[0-9]*.tex",
+      "allow_only": ["^\\\\chapter", "^\\\\input\\{", "^\\\\label\\{",
+                     "^\\\\usetikzlibrary"],
+      "require": ["\\\\chapter\\{", "\\\\input\\{"],
+      "severity": "error",
+      "message": "chapter root holds only \\chapter and \\input calls — prose and \\section belong in sub-files" },
+    { "id": "section-leaf", "glob": "paper/ch[0-9]*/sec-*/*.tex",
+      "forbid": [
+        { "pattern": "\\\\chapter\\{",
+          "message": "\\chapter belongs in the chapter root file" },
+        { "pattern": "\\\\usetikzlibrary",
+          "message": "\\usetikzlibrary belongs in the chapter root file" }
+      ],
+      "severity": "error" }
+  ]
 }
