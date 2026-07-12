@@ -4,7 +4,7 @@ set -euo pipefail
 REPO="$(git rev-parse --show-toplevel)"
 cd "$REPO"
 
-echo "==> Research Harness installer"
+echo "==> Pramana installer"
 git config core.hooksPath .githooks
 chmod +x .githooks/pre-commit .harness/engine/*.py .harness/hooks/*.py
 echo "  ✓ git pre-commit gate active (.githooks)"

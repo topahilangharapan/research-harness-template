@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Research Harness — generic, config-driven validator.
+"""Pramana — generic, config-driven validator.
 
 ALL policy lives in harness.json at the repo root; this engine only
 interprets it. Add rules by editing JSON, never this file.

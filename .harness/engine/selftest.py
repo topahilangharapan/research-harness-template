@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Research Harness — enforcement self-test.
+"""Pramana — enforcement self-test.
 
 Proves, mechanically, that every hardcoded rule family actually blocks:
 for each family, a violating fixture is validated and the expected

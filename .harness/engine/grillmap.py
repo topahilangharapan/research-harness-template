@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Research Harness — defense coverage engine (used by the 'defend' skill).
+"""Pramana — defense coverage engine (used by the 'defend' skill).
 
 Deterministically extracts every GRILLABLE UNIT from the manuscript —
 section headings, cited claims, floats, the scope statement — assigns

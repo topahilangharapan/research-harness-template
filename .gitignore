@@ -1,3 +1,6 @@
+# macOS
+.DS_Store
+
 # harness runtime cache (citation lookups)
 .harness/cache/
 
@@ -17,3 +20,6 @@ build/
 
 # local Claude settings (per-user permissions)
 .claude/settings.local.json
+
+# Python bytecode
+__pycache__/

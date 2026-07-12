@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Research Harness doctor — self-consistency checker.
+"""Pramana doctor — self-consistency checker.
 
 The harness governs the manuscript; the doctor governs THE HARNESS.
 It makes 'update the harness' a safe operation: after any change to

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Research Harness — citation existence verifier (anti-hallucination).
+"""Pramana — citation existence verifier (anti-hallucination).
 
 Offline mode (default, used by hooks/pre-commit):
     * every configured bib file parses
@@ -29,7 +29,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from validate import repo_root, load_config, parse_bibs  # noqa: E402
 
-UA = {"User-Agent": "research-harness-citecheck/1.0 (mailto:none@example.com)"}
+UA = {"User-Agent": "pramana-citecheck/1.0 (mailto:none@example.com)"}
 
 
 def norm_title(t):

@@ -1,14 +1,14 @@
 ---
 name: update-harness
 description: >
-  Update, extend, tune, or refactor the Research Harness itself — its rules,
+  Update, extend, tune, or refactor the Pramana harness itself — its rules,
   config fragments, enforcement wiring, hooks, docs, or this skill. Use when
   the user says "update the harness", "add a rule", "change the policy",
   "tune enforcement", "loosen/tighten a check", or asks why the harness
   blocked something and wants it changed.
 ---
 
-# Updating the Research Harness
+# Updating the Pramana harness
 
 You are modifying the enforcement system itself. The doctor
 (`.harness/engine/doctor.py`) verifies consistency mechanically and will

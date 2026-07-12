@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Research Harness pre-commit — steps are declared in harness.json
+# Pramana pre-commit — steps are declared in harness.json
 # (enforcement.pre_commit.checks). Installed by scripts/install-harness.sh.
 set -uo pipefail
 

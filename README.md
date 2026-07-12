@@ -1,4 +1,4 @@
-# Research Harness Template
+# Pramana
 
 A hardcoded AI-harness for academic research and journal writing. The idea:
 markdown instructions to an AI are *advisory* — the model can drift or
@@ -6,6 +6,11 @@ hallucinate past them. This template moves every mechanically-checkable rule
 into **code that runs deterministically**, and keeps only judgment rules
 (scope, argument quality, source fidelity) in instructions, refreshed into
 the AI's context every single turn.
+
+The name is Sanskrit: **pramāṇa** (प्रमाण), a *means of valid knowledge* —
+the epistemological standard by which a claim counts as proven. That is the
+contract this harness enforces: a citation must exist, an identifier must
+resolve, a rule must hold — or the work does not pass.
 
 ## Design decisions (and why)
 
@@ -22,9 +27,10 @@ the AI's context every single turn.
 ## Quick start
 
 ```bash
-# 1. Copy this template to a new project (or clone your template repo)
-cp -r research-harness-template my-new-paper && cd my-new-paper
-git init -b main
+# 1. Create a new project from this template
+#    (or click "Use this template" on GitHub)
+gh repo create my-new-paper --template topahilangharapan/pramana --private --clone
+cd my-new-paper
 
 # 2. Edit the config fragments in harness/:
 #    - 00-project.json  -> name, manuscript_paths (where the paper lives)
@@ -198,3 +204,7 @@ Scope judgment, whether a source really supports a claim, and prose quality
 need reasoning — code can't check them. They live in `CLAUDE.md` and in the
 per-turn digest, plus (recommended) an LLM-side citation-fidelity review
 before submission. Everything else is hard.
+
+## License
+
+[MIT](LICENSE)

@@ -1,6 +1,6 @@
 # CLAUDE.md — Research Project Instructions
 
-This project uses the **Research Harness**: every mechanically-checkable rule
+This project uses **Pramana**, a research harness: every mechanically-checkable rule
 is declared in `harness.json` and enforced by code (Claude Code hooks, git
 pre-commit, CI). Hook blocks are authoritative — fix the violation, never
 work around a block.
