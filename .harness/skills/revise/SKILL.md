@@ -61,6 +61,21 @@ scaffold (new content) → draft → review → **revise** (changes) → draft �
      add 2 paragraphs on limitations, citing smith2021. -->
 ```
 
+## DOCX targets
+
+Word has no comments-in-source, so markers are visible MARKER-styled
+paragraphs placed with `.harness/engine/docxtool.py`:
+
+- `insert <file> N --text "@EDIT[chg-001|REWRITE] ..." --marker --before`
+  puts the instruction above the target paragraph.
+- Wrap the untouched original in block markers the same way:
+  `==== ORIGINAL chg-001 ====` paragraph before it and
+  `==== END ORIGINAL chg-001 ====` after (DELETE blocks likewise).
+  Block content stays visible in Word but is prose-check-exempt; the
+  strict gate blocks delivery until draft consumes it.
+- Verify pairing exactly as for LaTeX:
+  `python3 .harness/engine/validate.py <file>` (E-MARKER).
+
 ## Hard rules
 
 - NO prose. If a change is small enough that you are tempted to just

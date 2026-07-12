@@ -93,11 +93,15 @@ def main():
                  "tools (which ask the user) or have the user download "
                  "sources into references/ themselves.")
 
-        # Bash mutation guard — closes the shell bypass around Edit/Write
+        # Bash mutation guard — closes the shell bypass around Edit/Write.
+        # docxtool mutating commands and raw zip surgery count as writes:
+        # the branch gate and protected paths apply to .docx edits too.
         bg = cfg.get("enforcement", {}).get("bash_guard", {})
         mutates = re.search(
             r"\bsed\s+(-\w*\s+)*-i|\btee\b|>>|(?<![<>=])>(?!&)|\bmv\b|"
-            r"\brm\b|\bcp\b|\btruncate\b", cmd)
+            r"\brm\b|\bcp\b|\btruncate\b|"
+            r"docxtool\.py['\"]?\s+(replace|insert|delete|add-cite|new)\b|"
+            r"\bzip\b|\bunzip\s+(-\w*\s+)*-\w*o", cmd)
         if bg.get("enabled", True) and mutates:
             if os.environ.get(pp.get("override_env", "ALLOW_PROTECTED")) != "1":
                 for d in pp.get("deny", []):
@@ -125,6 +129,18 @@ def main():
     except ValueError:
         sys.exit(0)
     rel = relpath(root, path)
+
+    # .docx is a zip of XML — Edit/Write would corrupt it. All docx
+    # editing goes through the engine CLI, which self-gates/validates.
+    if tool in ("Edit", "Write", "MultiEdit", "NotebookEdit") and \
+            rel.lower().endswith(".docx") and \
+            cfg.get("formats", {}).get("docx", False):
+        deny("BLOCKED by harness: .docx is a binary format — Edit/Write "
+             "would corrupt it. Use the docx CLI instead:\n"
+             "  python3 .harness/engine/docxtool.py cat|show|outline|cites|"
+             "replace|insert|delete|add-cite|new ...\n"
+             "(replace preserves citation fields via {{field:k}} "
+             "placeholders — run 'show' first.)")
 
     if os.environ.get(pp.get("override_env", "ALLOW_PROTECTED")) != "1":
         for d in pp.get("deny", []):

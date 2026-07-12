@@ -14,6 +14,9 @@ description: >
 Never fix a figure blind: every change is verified by actually LOOKING at
 the rendered output, twice.
 
+Scope: LaTeX/Markdown figure sources only. Word (.docx) drawings are
+not supported in v1 — tell the user to fix those in Word directly.
+
 ## Activation sequence (in order)
 
 1. **Intake.** Identify the figure: label, file path, or caption text.

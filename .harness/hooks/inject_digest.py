@@ -80,6 +80,14 @@ if cfg.get("workflow", {}).get("markers"):
                  "written content go through revise (markers), never "
                  "direct rewrites. Markers must be gone before delivery "
                  "(strict gate enforces).")
+if cfg.get("formats", {}).get("docx"):
+    lines.append("5b. DOCX: never Edit/Write a .docx (binary — the gate "
+                 "blocks it). Drive python3 .harness/engine/docxtool.py "
+                 "(cat/show/outline/cites/replace/insert/delete/add-cite/"
+                 "new); replace must carry every {{field:k}} citation "
+                 "placeholder. Citations are native Zotero/Word fields "
+                 "that must resolve to the bib; markers are visible "
+                 "marker paragraphs.")
 lines.append("6. Hook blocks are authoritative — fix the violation, never "
              "work around a block.")
 lines += dig.get("extra_lines", [])

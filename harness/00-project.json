@@ -6,7 +6,7 @@
     "name": "my-research-paper",
     // The harness governs ONLY the manuscript being written
     // (thesis / journal article / conference paper). Rules BLOCK here:
-    "manuscript_paths": ["src/", "paper/"],
+    "manuscript_paths": ["paper/"],
     // OPTIONAL project-specific extension — leave empty in general.
     // Paths listed here get the same rules as warnings only:
     "notes_paths": []

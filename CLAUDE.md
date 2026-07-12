@@ -23,6 +23,13 @@ work around a block.
    session end.
 5. **Prose**: academic register; no em-dashes; no forbidden AI vocabulary
    (the validator enforces this on every edit in manuscript paths).
+6. **Word manuscripts (.docx)**: never Edit/Write a .docx — it is a zip
+   of XML and the gate blocks it. Use
+   `python3 .harness/engine/docxtool.py` (cat/show/outline/cites/
+   replace/insert/delete/add-cite/new). `replace` must carry every
+   `{{field:k}}` citation placeholder shown by `show`. Citations are
+   native Zotero/Word fields and must resolve to entries in the bib;
+   the validator reports .docx findings by paragraph index.
 
 ## Writing workflow
 

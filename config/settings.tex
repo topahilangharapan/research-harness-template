@@ -1,0 +1,18 @@
+% config/settings.tex — the only file to edit for document setup.
+% Formatting rules live in _internals/paper.sty (protected).
+
+% --- Document metadata ---
+\def\papertitle{Working Title}          % replace before submission
+\def\paperauthor{Musthofa Joko Anggoro}
+\def\paperaffiliation{}                 % institution / department; may stay empty
+\def\paperdate{\today}                  % or a fixed date, e.g. {July 2026}
+
+% --- Layout ---
+\setstretch{1.4}                        % line spacing override point
+
+% --- Bibliography gate ---
+% BibTeX fails on an empty bibliography, so the \bibliography call in
+% main.tex is disabled until references.bib has its first cited entry.
+% Flip to \bibliographyreadytrue when you add the first citation.
+\newif\ifbibliographyready
+\bibliographyreadyfalse

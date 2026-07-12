@@ -30,6 +30,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 
@@ -68,6 +69,62 @@ def git_commit(root):
         return "unknown"
 
 
+def build_docx(root, cfg, b, main_docx, out_dir, version, stamp,
+               validation, args):
+    """Word build: copy the validated .docx into the versioned build
+    folder (that snapshot is the submission artifact) and, when
+    LibreOffice is available, also export a PDF via
+    workflow.build.docx_command. No soffice => snapshot only, exit 0."""
+    print(f"build v{version} -> {os.path.relpath(out_dir, root)}")
+    src = os.path.join(root, main_docx)
+    if not os.path.isfile(src):
+        sys.exit(f"BUILD FAILED: main file '{main_docx}' not found")
+    snap = os.path.join(out_dir, os.path.basename(main_docx))
+    shutil.copy2(src, snap)
+
+    pdf, exit_code, log = None, 0, ""
+    if shutil.which("soffice"):
+        cmd = b.get("docx_command",
+                    "soffice --headless --convert-to pdf "
+                    "--outdir {out} {main}").format(
+            main=shlex.quote(main_docx), out=shlex.quote(out_dir))
+        print(f"$ {cmd}")
+        r = subprocess.run(cmd, shell=True, cwd=root,
+                           capture_output=True, text=True, timeout=600)
+        log = (r.stdout or "") + (r.stderr or "")
+        exit_code = r.returncode
+        pdfs = [f for f in os.listdir(out_dir) if f.endswith(".pdf")]
+        pdf = pdfs[0] if pdfs else None
+        if exit_code != 0 or not pdf:
+            print("PDF conversion FAILED — snapshot kept; see build.log")
+    else:
+        log = "PDF conversion skipped: soffice (LibreOffice) not found\n"
+        print("PDF conversion skipped: soffice not found — snapshot only")
+    with open(os.path.join(out_dir, "build.log"), "w") as f:
+        f.write(log)
+
+    manifest = {
+        "version": version,
+        "timestamp": stamp,
+        "git_commit": git_commit(root),
+        "main": main_docx,
+        "format": "docx",
+        "validation": validation,
+        "strict": args.strict,
+        "forced": args.force and validation == "FAILED",
+        "exit_code": exit_code,
+        "docx": os.path.basename(snap),
+        "pdf": pdf,
+    }
+    with open(os.path.join(out_dir, "manifest.json"), "w") as f:
+        json.dump(manifest, f, indent=1)
+    rel_out = os.path.relpath(out_dir, root)
+    print(f"OK: {rel_out}/{os.path.basename(snap)}"
+          + (f" + {pdf}" if pdf else "")
+          + f" (validation: {validation}"
+          + (", FORCED" if manifest["forced"] else "") + ")")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--strict", action="store_true",
@@ -102,6 +159,12 @@ def main():
     stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
     out_dir = os.path.join(broot, f"{stamp}_v{version}")
     os.makedirs(out_dir)
+
+    # ---- docx main: the validated snapshot IS the build artifact.
+    # PDF export only if LibreOffice is installed; degrade gracefully.
+    if main_tex.lower().endswith(".docx"):
+        return build_docx(root, cfg, b, main_tex, out_dir, version, stamp,
+                          validation, args)
 
     cmd = command.format(main=shlex.quote(main_tex),
                          out=shlex.quote(out_dir))

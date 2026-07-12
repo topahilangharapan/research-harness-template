@@ -1,0 +1,213 @@
+%
+% paper.sty — generalized academic-paper formatting layer.
+%
+% Derived from the UI thesis template (uithesis.sty v2.2.1 by Andreas
+% Febrian, edited by Ichlasul Affan), stripped of UI-specific branding,
+% language conditionals, and thesis front-matter machinery.
+%
+% Loaded from main.tex as \usepackage{_internals/paper}. User-tunable
+% values (title, author, spacing, bibliography gate) live in
+% config/settings.tex — do not put metadata here.
+
+%-----------------------------------------------------------------------------%
+% Packages
+%-----------------------------------------------------------------------------%
+\usepackage{tocbibind}          % bibliography appears in the ToC
+\usepackage{enumitem}
+\usepackage{booktabs}
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\usepackage{hyperref}
+\usepackage{url}
+  \urlstyle{same}
+
+\usepackage{multirow}
+\usepackage{graphicx}
+
+\usepackage{setspace}
+  % Default line spacing; override point is config/settings.tex.
+  \setstretch{1.4}
+
+\usepackage[paper=a4paper,headheight=0pt,left=3cm,top=3cm,right=3cm,bottom=3cm]{geometry}
+
+\usepackage[font=footnotesize,format=plain,labelfont=bf,up,textfont=up,justification=centering]{caption}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{newtxtext,newtxmath} % complete Times font set
+\usepackage{bm}
+
+\usepackage{longtable}
+\usepackage{pdflscape}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+
+\usepackage{fancyhdr}
+
+% Decorative chapter headings (stock fncychap; the UI template shipped a
+% modified ConnyRevised variant — the distribution Conny is close enough).
+\usepackage[Conny]{fncychap}
+
+\usepackage{array}
+\usepackage{float}
+
+\usepackage{listings, xcolor}
+
+% Citation format. Default: APA (author-year). Alternatives commented.
+%% APA
+\usepackage[natbibapa]{apacite}
+\bibliographystyle{apalike}
+%% IEEE
+% \usepackage{natbib}
+% \bibliographystyle{IEEEtran}
+
+%-----------------------------------------------------------------------------%
+% Layout
+%-----------------------------------------------------------------------------%
+\sloppy
+
+\hypersetup{
+	colorlinks=false,
+	pdfborder=0 0 0,
+	linkcolor=blue,
+	citecolor=black,
+	bookmarksopen=false,
+	bookmarksnumbered=true,
+	pdfstartview=FitH,
+	pdfview=FitH,
+	linktoc=all
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip} {12pt}
+
+\setlist[itemize]{nosep,leftmargin=*}
+\setlist[enumerate]{nosep,leftmargin=*}
+
+% Sections and below: 12pt bold, tight vertical spacing.
+\makeatletter
+\renewcommand\section{\@startsection {section}{1}{\z@}%
+	{0pt}%
+	{1pt \@plus -1pt \@minus 1pt}%
+	{\normalfont\fontsize{12}{15}\bfseries}}
+\renewcommand\subsection{\@startsection {subsection}{2}{\z@}%
+	{0pt}%
+	{1pt \@plus -1pt \@minus 1pt}%
+	{\normalfont\fontsize{12}{15}\bfseries}}
+\renewcommand\subsubsection{\@startsection {subsubsection}{3}{\z@}%
+	{0pt}%
+	{1pt \@plus -1pt \@minus 1pt}%
+	{\normalfont\fontsize{12}{15}\bfseries}}
+\renewcommand\paragraph{\@startsection {paragraph}{4}{\z@}%
+	{0pt}%
+	{1pt \@plus -1pt \@minus 1pt}%
+	{\normalfont\fontsize{12}{15}\bfseries}}
+\renewcommand\subparagraph{\@startsection {subparagraph}{5}{\z@}%
+	{0pt}%
+	{1pt \@plus -1pt \@minus 1pt}%
+	{\normalfont\fontsize{12}{15}\bfseries}}
+\makeatother
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+% One page style: centered page number, no rules, no branding.
+\renewcommand{\headrulewidth}{0.0pt}
+\fancyhf{}
+\fancypagestyle{plain}{
+	\fancyhead{}
+	\renewcommand{\headrulewidth}{0.0pt}
+	\fancyfoot[C]{\thepage}
+	\renewcommand{\footrulewidth}{0.0pt}
+}
+\pagestyle{plain}
+
+% Table column types: alignment (left/center/right) x anchor (top/mid/bottom).
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}  % top-left
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}m{#1}}  % middle-left
+\newcolumntype{B}[1]{>{\raggedright\arraybackslash}b{#1}}  % bottom-left
+\newcolumntype{U}[1]{>{\centering\arraybackslash}p{#1}}    % top-center
+\newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}    % middle-center
+\newcolumntype{O}[1]{>{\centering\arraybackslash}b{#1}}    % bottom-center
+\newcolumntype{E}[1]{>{\raggedleft\arraybackslash}p{#1}}   % top-right
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}m{#1}}   % middle-right
+\newcolumntype{T}[1]{>{\raggedleft\arraybackslash}b{#1}}   % bottom-right
+
+% Code listing style.
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\lstdefinestyle{codestyle}{
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	identifierstyle=\color{black},
+	basicstyle=\ttfamily\scriptsize,
+	breakatwhitespace=true,
+	breaklines=true,
+	breakindent=1em,
+	captionpos=b,
+	keepspaces=true,
+	numbers=left,
+	numbersep=5pt,
+	showspaces=false,
+	showstringspaces=false,
+	showtabs=false,
+	tabsize=2
+}
+\lstset{style=codestyle}
+
+%-----------------------------------------------------------------------------%
+% Names
+%-----------------------------------------------------------------------------%
+\AtBeginDocument{
+	\renewcommand{\bibname}{References}
+}
+
+% APA-specific tweaks (remove if switching away from apacite).
+\AtBeginDocument{
+	\renewcommand{\refname}{\bibname}
+	\renewcommand{\BBAA}{\&}
+	\renewcommand{\BBAB}{and}
+}
+
+%-----------------------------------------------------------------------------%
+% Commands
+%-----------------------------------------------------------------------------%
+\newcommand{\f}[1]{\textit{#1}}
+\newcommand{\bi}[1]{\textbf{\textit{#1}}}
+\newcommand{\bo}[1]{\textbf{#1}}
+\newcommand{\m}[1]{\boldmath{ \( #1 \)}}
+\newcommand{\mc}[1]{\boldmath{ \[ #1 \]}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\latex}{\LaTeX}
+
+% Add an unnumbered entry to the ToC.
+\newcommand{\addChapter}[1]{%
+	\phantomsection
+	\addcontentsline{toc}{chapter}{#1}%
+}
+
+% Heading for unnumbered front-matter pages (abstract, acknowledgements).
+% Use this instead of \chapter*: the harness treats any \chapter line as a
+% structure-only chapter root, so prose files must not contain one.
+\newcommand{\frontmatterheading}[1]{%
+	\addChapter{#1}%
+	{\centering\Large\bfseries #1\par}%
+	\vspace{1em}%
+}
+
+% End-of-chapter page break. The thesis original inserted blank pages for
+% two-sided printing; the generalized layer is one-sided.
+\newcommand{\clearchapter}{\clearpage}
+
+% Figure/table caption with a source attribution line.
+\newcommand*{\captionsource}[2]{
+	\caption[{#1}]{#1\par
+		\footnotesize\textbf{Source:} #2\par}
+}
+\newcommand*{\captionsourcecont}[2]{
+\caption[]{#1 (continued)\par
+	\footnotesize\textbf{Source:} #2\par}
+}

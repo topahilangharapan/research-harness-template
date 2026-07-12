@@ -1,0 +1,41 @@
+%
+% main.tex — document orchestrator. Structure only: formatting lives in
+% _internals/paper.sty, metadata in config/settings.tex, prose under paper/.
+%
+\documentclass[12pt, a4paper, onecolumn, oneside, final]{report}
+\raggedbottom
+
+% Formatting layer (protected) and user settings.
+\usepackage{_internals/paper}
+\input{config/settings}
+
+\begin{document}
+
+\input{_internals/titlepage}
+
+% --- Front matter ---
+\pagenumbering{roman}
+
+\input{paper/frontmatter/abstract}
+\clearpage
+
+\tableofcontents
+\clearpage
+\listoffigures
+\clearpage
+\listoftables
+\clearpage
+
+% --- Body ---
+\pagenumbering{arabic}
+
+\include{paper/ch1/ch1}
+% The scaffold skill appends further \include lines here, one per chapter.
+
+% --- Back matter ---
+% Gated in config/settings.tex until references.bib has entries.
+\ifbibliographyready
+	\bibliography{references}
+\fi
+
+\end{document}

@@ -18,8 +18,8 @@ enforced as law, not suggested as style.
 | Decision | Choice | Rationale |
 |---|---|---|
 | Packaging | Template repo | Clone per project; self-contained; projects can diverge freely |
-| Rule location | `harness/` config directory (JSONC fragments) | One small file per concern, merged in filename order. Add/change/remove any rule or enforcement step by editing JSON — the engine never changes |
-| Formats | LaTeX + Markdown/Quarto | Covers manuscripts and research notes |
+| Rule location | `harness/` config directory (JSONC fragments) | One small file per concern, merged in filename order. Add/change/remove any rule by editing JSON — adding a whole *format* is engine work, but its policy still lives in JSON |
+| Formats | LaTeX + Markdown/Quarto + Word (.docx) | Covers manuscripts and research notes; .docx is parsed/edited via the stdlib OOXML engine (no pandoc/python-docx dependency) |
 | Citation policy | Offline + online | Offline: cite keys must exist, entries typed, identifier fields required. Online: DOIs verified via Crossref, ISBNs via OpenLibrary, titles fuzzy-matched — a fabricated reference cannot survive CI |
 | Coverage | Manuscript only (`manuscript_paths`) | The harness governs the thesis/journal/paper being written; everything else is out of its jurisdiction. An optional per-project `notes_paths` zone can be added where rules warn instead of block |
 | Scope guard | Keyword deny-list (warn) + per-turn digest | Mechanical early warning without blocking legitimate related-work mentions |
@@ -54,6 +54,8 @@ harness/                     # merged in filename order; lists concatenate,
 ├── 40-citations.json        # bib policy + online verification
 ├── 50-scope.json            # scope statement + deny keywords
 ├── 60-latex.json            # command map, label conventions
+├── 65-docx.json             # Word (.docx) manuscripts: citation-field
+│                            #   policy, heading contracts, marker style
 ├── 70-workflow.json         # lifecycle markers + build command
 ├── 90-enforcement.json      # which checks run where
 ├── presets/                 # opt-in shared libraries (via "extends")
@@ -174,6 +176,76 @@ doctor enforces the postcondition. Run it manually any time:
 ```bash
 python3 .harness/engine/doctor.py
 ```
+
+## Word manuscripts (.docx)
+
+A `.docx` inside `manuscript_paths` is governed exactly like a `.tex`
+file — same prose rules, citation policy, workflow markers, git gates.
+Enable with `formats.docx` (on in `harness/65-docx.json`); the engine
+parses OOXML with the Python standard library only (no pandoc or
+python-docx anywhere).
+
+What is different, because Word is a zip of XML:
+
+- **The "line" is the paragraph.** Validator findings for a `.docx`
+  report the 1-based paragraph index in document order. Table
+  paragraphs are covered; headers/footers are not governed in v1;
+  footnote citations are detected (they report at line 0).
+- **Edit/Write are blocked on .docx** (the pre-tool gate redirects).
+  All editing goes through the CLI, which gates itself (branch,
+  protected paths, Word lock files) and validates the file after every
+  mutation — same contract as the per-edit hook:
+
+  ```bash
+  python3 .harness/engine/docxtool.py cat paper/ch2.docx        # numbered paragraphs
+  python3 .harness/engine/docxtool.py show paper/ch2.docx 7     # one paragraph + fields
+  python3 .harness/engine/docxtool.py outline paper/ch2.docx    # heading tree
+  python3 .harness/engine/docxtool.py cites paper/ch2.docx      # citation audit
+  python3 .harness/engine/docxtool.py replace paper/ch2.docx 7 --text "... {{field:1}} ..."
+  python3 .harness/engine/docxtool.py insert paper/ch2.docx 7 --text "@TODO ..." --marker
+  python3 .harness/engine/docxtool.py add-cite paper/ch2.docx 7 --key smith2020
+  python3 .harness/engine/docxtool.py new paper/ch3.docx --title "Evaluation"
+  ```
+
+- **Citations are native fields** — Zotero/Mendeley
+  (`ADDIN … CSL_CITATION`) and Word CITATION fields. The validator
+  reconstructs each field from its runs (instruction text is routinely
+  split across many) and requires it to resolve to a `references.bib`
+  entry: DOI first, then ISBN, then fuzzy title
+  (`docx.citations.title_match_threshold`). That keeps the whole
+  anti-fabrication chain intact — bib entry ⇒ required identifiers ⇒
+  shelf file ⇒ online verification in CI. `citecheck.py --docx` prints
+  the per-field audit. Plain-text `[@key]` / `[12]` citations warn.
+- **The placeholder contract.** `show` renders a paragraph's citation
+  fields as `{{field:1}}`, `{{field:2}}`, …; `replace` refuses any
+  rewrite that does not carry every placeholder exactly once, then
+  splices the original field XML back verbatim — a rewrite mechanically
+  cannot drop or duplicate a citation.
+- **Markers are visible paragraphs.** Word has no source comments, so
+  `@TODO` / `@EDIT` / ORIGINAL–DELETE blocks live in shaded
+  `HarnessMarker` paragraphs (style configurable in `docx.markers`) —
+  a human opening the file in Word sees unresolved work. Pairing
+  integrity (E-MARKER) and the `--strict-markers` delivery gate work
+  unchanged.
+- **Structure contracts** (`docx.structure`, code `O-STRUCT`): one
+  top-level heading per file (the modularity analog), no skipped
+  heading levels, optional required-heading regexes. Heading levels are
+  resolved from outline levels through the style `basedOn` chain, so
+  localized or renamed style names cannot dodge the check.
+- **Check ids:** `O-FIELD` (damaged/unparseable citation field),
+  `O-CITE` (field resolves to no bib entry), `O-STRUCT` (heading
+  contracts).
+- **Builds:** point `workflow.build.main` at the `.docx` — the gate
+  runs as usual, the validated file is snapshotted into the versioned
+  `build/` folder, and a PDF is exported when LibreOffice (`soffice`)
+  is installed (`workflow.build.docx_command`); otherwise the snapshot
+  is the artifact.
+- **Known v1 limits:** tracked changes are read as accepted
+  (insertions counted, deletions ignored); footnotes are detected but
+  not editable; `docxtool add-cite` synthesizes a Zotero-compatible
+  field that Zotero may need to re-link on its next refresh (disable
+  with `docx.citations.allow_generated_fields=false` to route new
+  citations through `@TODOCITE` markers instead).
 
 ## Building the PDF
 

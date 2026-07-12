@@ -181,7 +181,7 @@ def main():
     # D-EXEC — enforcement scripts are executable
     for s in [PRECOMMIT, "scripts/install-harness.sh",
               ".harness/engine/validate.py", ".harness/engine/citecheck.py",
-              ".harness/engine/doctor.py"]:
+              ".harness/engine/doctor.py", ".harness/engine/docxtool.py"]:
         fp = os.path.join(root, s)
         if os.path.isfile(fp) and not os.access(fp, os.X_OK):
             probs.append(Problem("WARN", "D-EXEC",

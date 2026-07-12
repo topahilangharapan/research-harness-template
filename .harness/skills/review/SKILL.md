@@ -57,6 +57,16 @@ handed to the revise → draft pipeline.
    instructions for the **revise** skill. Close with next steps
    (re-review / revise / continue).
 
+## DOCX targets
+
+For Word manuscripts, read with `.harness/engine/docxtool.py cat/show`
+(never Read raw .docx bytes) and audit citations with
+`docxtool.py cites <file>` plus `citecheck.py --docx` (every native
+field's bib match status, footnotes included). Findings locate by
+paragraph index — that is what `file:line` means for a .docx. Approved
+mechanical fixes are applied through `docxtool.py replace` under the
+same placeholder contract as drafting.
+
 ## Hard rules
 
 - Read-only during the audit: no file modifications until triage

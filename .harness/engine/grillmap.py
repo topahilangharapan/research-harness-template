@@ -53,9 +53,13 @@ def extract_units(root, cfg):
                       "ask": "defend the research scope and boundaries"})
     for path in collect_all(root, cfg):
         rel = relpath(root, path)
-        if not rel.endswith((".tex", ".md", ".qmd", ".Rmd")):
+        if not rel.endswith((".tex", ".md", ".qmd", ".Rmd", ".docx")):
             continue
         if not os.path.isfile(path):
+            continue
+        if rel.endswith(".docx"):
+            if not os.path.basename(rel).startswith("~$"):
+                units += extract_docx_units(root, path, rel, cfg)
             continue
         kind = "tex" if rel.endswith(".tex") else "md"
         text = open(path, encoding="utf-8", errors="replace").read()
@@ -108,6 +112,51 @@ def extract_units(root, cfg):
             seen.add(u["id"])
             out.append(u)
     return out
+
+
+def extract_docx_units(root, path, rel, cfg):
+    """Grillable units from a Word manuscript: headings from outline
+    levels, claims from native citation fields (matched bib key when
+    resolvable). 'line' is the paragraph index, as everywhere for docx.
+    Word drawings/floats are out of scope in v1."""
+    import ooxml
+    try:
+        doc = ooxml.load(path)
+    except ooxml.DocxError:
+        return []
+    _, entries = None, None
+    try:
+        from validate import parse_bibs
+        _, entries = parse_bibs(root, cfg)
+    except Exception:
+        pass
+    th = float(cfg.get("docx", {}).get("citations", {})
+               .get("title_match_threshold", 0.85))
+    units = []
+    for para in doc.paras:
+        if para.outline_level and para.text.strip():
+            units.append({
+                "id": uid("sec", f"{rel}|{para.text.strip()}"),
+                "kind": "section", "file": rel, "line": para.index,
+                "text": para.text.strip(),
+                "ask": "explain this section's argument and its role in "
+                       "the whole"})
+        for fld in para.fields:
+            if fld.broken:
+                continue
+            for item in fld.items:
+                key = None
+                if entries is not None:
+                    key, _ = ooxml.match_bib(item, entries, th)
+                label = key or item.get("doi") or (item.get("title") or "?")[:40]
+                units.append({
+                    "id": uid("cite", f"{rel}|{label}|{para.text.strip()[:80]}"),
+                    "kind": "claim", "file": rel, "line": para.index,
+                    "text": f"[{label}] {para.text.strip()[:100]}",
+                    "ask": "defend this claim: what exactly does the "
+                           "cited source say, where, and does it support "
+                           "the sentence as written?"})
+    return units
 
 
 def load_cov(path):
