@@ -45,7 +45,7 @@ if not dirty:
 
 files = [ln[3:].strip().strip('"') for ln in dirty.splitlines()]
 checkable = [os.path.join(root, f) for f in files
-             if f.endswith((".tex", ".md", ".qmd", ".Rmd", ".bib"))]
+             if f.endswith((".tex", ".md", ".qmd", ".Rmd", ".bib", ".docx"))]
 
 sg = cfg.get("enforcement", {}).get("stop_gate", {})
 if sg.get("block_on_validation_errors", True) and checkable:

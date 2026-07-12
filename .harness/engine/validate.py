@@ -174,7 +174,7 @@ KNOWN_TOP_KEYS = {"project", "formats", "git", "protected_paths", "prose",
                   "latex_commands", "labels", "scope", "citations",
                   "custom_rules", "enforcement", "workflow",
                   "file_shapes", "latex_floats", "latex_xref",
-                  "latex_modularity"}
+                  "latex_modularity", "docx"}
 SEVERITIES = {"error", "warn", "off"}
 
 
@@ -279,6 +279,36 @@ def check_config(root, cfg):
     for b in cfg.get("citations", {}).get("bib_files", []):
         if not os.path.isfile(os.path.join(root, b)):
             probs.append(f"WARN: citations.bib_files: '{b}' not found (yet?)")
+    dx = cfg.get("docx", {})
+    if dx:
+        dc = dx.get("citations", {})
+        for f in ("unmatched_severity", "unparseable_severity"):
+            if dc.get(f, "error") not in SEVERITIES:
+                probs.append(f"docx.citations.{f}='{dc.get(f)}' not in "
+                             f"{sorted(SEVERITIES)}")
+        th = dc.get("title_match_threshold", 0.85)
+        if not isinstance(th, (int, float)) or not 0 < th <= 1:
+            probs.append("docx.citations.title_match_threshold must be a "
+                         "number in (0, 1]")
+        stx = dx.get("structure", {})
+        for f in ("severity", "no_heading_skips"):
+            if stx.get(f, "warn") not in SEVERITIES:
+                probs.append(f"docx.structure.{f}='{stx.get(f)}' not in "
+                             f"{sorted(SEVERITIES)}")
+        mh = stx.get("max_h1_per_file", 1)
+        if not isinstance(mh, int) or mh < 0:
+            probs.append("docx.structure.max_h1_per_file must be int >= 0")
+        for p in stx.get("required_headings", []):
+            try:
+                re.compile(p)
+            except re.error as e:
+                probs.append(f"docx.structure.required_headings bad regex "
+                             f"'{p}': {e}")
+        lv = dx.get("density_section_levels", [1, 2])
+        if not isinstance(lv, list) or not all(
+                isinstance(x, int) and 1 <= x <= 9 for x in lv):
+            probs.append("docx.density_section_levels must be a list of "
+                         "ints in 1..9")
     return probs
 
 
@@ -303,6 +333,11 @@ class Finding:
 
 LATEX_EXT = (".tex",)
 MD_EXT = (".md", ".qmd", ".rmd", ".Rmd", ".markdown")
+DOCX_EXT = (".docx",)
+# Plain-text pseudo-citations inside a .docx ([@key] / [12]) — Word
+# manuscripts must cite through native Zotero/Word fields instead:
+PSEUDO_CITE = re.compile(r"\[@[\w:.#-]+[^\]]*\]|"
+                         r"\[\d{1,3}(?:\s*[,;–—-]\s*\d{1,3})*\]")
 CITE_LATEX = re.compile(r"\\(?:cite|citep|citet|citealp|citeauthor|citeyear|"
                         r"textcite|parencite|autocite|footcite)\*?"
                         r"(?:\[[^\]]*\])*\{([^}]*)\}")
@@ -376,6 +411,23 @@ def iter_prose_lines(text, kind):
             if verb:
                 continue
             yield n, strip_latex_comment(raw), raw
+
+
+def prose_units(text, kind, cfg, doc=None):
+    """Unified per-format prose stream: (lineno, prose, raw, meta).
+    tex/md wrap iter_prose_lines; docx delegates to ooxml (the paragraph
+    is the 'line', see ooxml.py). meta: blank, heading (density section
+    boundary), and for docx the paragraph's citation fields."""
+    if kind == "docx":
+        import ooxml
+        yield from ooxml.iter_prose_units(doc, cfg)
+        return
+    for n, line, raw in iter_prose_lines(text, kind):
+        blank = not line.strip()
+        heading = bool(not blank and (
+            re.search(r"\\(chapter|section)\s*[*{]", line) if kind == "tex"
+            else re.match(r"#{1,2}\s", line)))
+        yield n, line, raw, {"blank": blank, "heading": heading}
 
 
 # ------------------------------------------------------------ bib
@@ -848,7 +900,8 @@ def check_markers_post(rel, state, sev, findings):
                 f"{kind_} block '{rid}' opened but never closed"))
 
 
-def check_prose_file(root, rel, text, kind, zone, cfg, findings, bib_keys):
+def check_prose_file(root, rel, text, kind, zone, cfg, findings, bib_keys,
+                     doc=None):
     prose = cfg.get("prose", {})
     base = prose.get("severity_in_manuscript", "error")
     words = [w.lower() for w in
@@ -895,18 +948,15 @@ def check_prose_file(root, rel, text, kind, zone, cfg, findings, bib_keys):
              "open_orig": {}, "open_del": {}}
     in_block = False
 
-    for n, line, raw in iter_prose_lines(text, kind):
+    for n, line, raw, meta in prose_units(text, kind, cfg, doc=doc):
         # Scope tracking (density): paragraph and section boundaries
-        if not line.strip():
+        if meta.get("blank"):
             if not prev_blank:
                 para_i += 1
             prev_blank = True
         else:
             prev_blank = False
-            heading = (re.search(r"\\(chapter|section)\s*[*{]", line)
-                       if kind == "tex"
-                       else re.match(r"#{1,2}\s", line))
-            if heading:
+            if meta.get("heading"):
                 sec_i += 1
                 para_i += 1
 
@@ -1028,7 +1078,18 @@ def check_prose_file(root, rel, text, kind, zone, cfg, findings, bib_keys):
                     r.get("id", "C-CUSTOM"), rel, n,
                     r.get("message", "custom rule matched")))
 
-        if cite_check and bib_keys is not None:
+        if kind == "docx" and cfg.get("docx", {}).get("citations", {}).get(
+                "require_native_fields", True):
+            m = PSEUDO_CITE.search(line)
+            if m:
+                findings.append(Finding(
+                    "warn", "O-CITE", rel, n,
+                    f"plain-text citation '{m.group(0)}' — Word manuscripts "
+                    "cite through native Zotero/Word citation fields, not "
+                    "typed brackets (docxtool.py add-cite, or insert via "
+                    "Zotero and let the field resolve)"))
+
+        if cite_check and bib_keys is not None and kind != "docx":
             used = []
             if kind == "tex":
                 for m in CITE_LATEX.finditer(line):
@@ -1057,6 +1118,101 @@ def check_prose_file(root, rel, text, kind, zone, cfg, findings, bib_keys):
     return {"words": fw, "total_words": file_word_total}
 
 
+def check_docx_structure(rel, doc, cfg, findings):
+    """O-STRUCT — heading contracts, the docx analog of file_shapes /
+    L-MODULAR: one top-level heading per file, no skipped levels,
+    optional required headings. Levels come from w:outlineLvl (resolved
+    through style basedOn chains), never localized style names."""
+    st = cfg.get("docx", {}).get("structure", {})
+    if not st.get("enabled", True):
+        return
+    sev = st.get("severity", "error")
+    headings = [(p.index, p.outline_level, p.text)
+                for p in doc.paras if p.outline_level]
+    max_h1 = int(st.get("max_h1_per_file", 1))
+    h1s = [h for h in headings if h[1] == 1]
+    if sev != "off" and len(h1s) > max_h1:
+        findings.append(Finding(
+            sev, "O-STRUCT", rel, h1s[max_h1][0],
+            f"{len(h1s)} top-level headings in one document (max {max_h1}) "
+            "— one chapter/document per file; split further content into "
+            "its own .docx"))
+    skip_sev = st.get("no_heading_skips", "warn")
+    if skip_sev != "off":
+        prev = 0
+        for idx, lvl, txt in headings:
+            if prev and lvl > prev + 1:
+                findings.append(Finding(
+                    skip_sev, "O-STRUCT", rel, idx,
+                    f"heading level jumps H{prev} -> H{lvl} "
+                    f"('{txt[:40]}') — do not skip heading levels"))
+            prev = lvl
+    if sev != "off":
+        for pat in st.get("required_headings", []):
+            try:
+                reg = re.compile(pat)
+            except re.error:
+                continue  # reported by --check-config
+            if not any(reg.search(t) for _, _, t in headings):
+                findings.append(Finding(
+                    sev, "O-STRUCT", rel, 0,
+                    f"required heading matching '{pat}' is missing"))
+
+
+def check_docx_citations(rel, doc, cfg, findings, entries):
+    """O-FIELD / O-CITE — every native citation field must parse and
+    resolve to exactly one references.bib entry (DOI, then ISBN, then
+    fuzzy title). This keeps the anti-fabrication chain intact: bib
+    entry => required identifiers => shelf file => online verification.
+    A DOI that exists only inside a Word field is a violation, not
+    something to verify ad hoc."""
+    import ooxml
+    dc = cfg.get("docx", {}).get("citations", {})
+    sev_un = dc.get("unmatched_severity", "error")
+    sev_bad = dc.get("unparseable_severity", "error")
+    th = float(dc.get("title_match_threshold", 0.85))
+    sources = doc.sources()
+    for fld in doc.fields:
+        if fld.kind == "other":
+            continue
+        where = " (in a footnote)" if fld.location == "footnote" else ""
+        if fld.broken:
+            if sev_bad != "off":
+                findings.append(Finding(
+                    sev_bad, "O-FIELD", rel, fld.para_index,
+                    f"broken citation field{where}: "
+                    f"{fld.reason or 'field structure damaged'} — repair it "
+                    "in Word/Zotero (or delete and re-insert the citation)"))
+            continue
+        items = fld.items
+        if fld.kind == "word":
+            src = sources.get(fld.tag)
+            if src is None:
+                if sev_bad != "off":
+                    findings.append(Finding(
+                        sev_bad, "O-FIELD", rel, fld.para_index,
+                        f"CITATION field references source tag "
+                        f"'{fld.tag}' which is not in the document's "
+                        "bibliography sources"))
+                continue
+            items = [src]
+        if entries is None or sev_un == "off":
+            continue
+        for item in items:
+            key, _how = ooxml.match_bib(item, entries, th)
+            if key is None:
+                ident = (item.get("doi") or item.get("isbn")
+                         or (item.get("title") or "")[:60] or "?")
+                findings.append(Finding(
+                    sev_un, "O-CITE", rel, fld.para_index,
+                    f"citation field ({ident}){where} matches no entry in "
+                    "the configured bib file(s) — every cited work must be "
+                    "on the shelf and in the bib first; possible fabricated "
+                    "citation"))
+            else:
+                fld.matched = key
+
+
 def check_protected(root, rel, cfg, findings):
     pp = cfg.get("protected_paths", {})
     if os.environ.get(pp.get("override_env", "ALLOW_PROTECTED")) == "1":
@@ -1073,7 +1229,7 @@ def check_protected(root, rel, cfg, findings):
 
 
 def check_file(root, path, cfg, findings, bib_keys, chapter_acc=None,
-               xref_acc=None):
+               xref_acc=None, bib_entries=None):
     rel = relpath(root, path)
     if check_protected(root, rel, cfg, findings):
         return
@@ -1088,18 +1244,35 @@ def check_file(root, path, cfg, findings, bib_keys, chapter_acc=None,
     elif fmts.get("markdown", False) and rel.lower().endswith(
             tuple(e.lower() for e in MD_EXT)):
         kind = "md"
+    elif fmts.get("docx", False) and rel.lower().endswith(DOCX_EXT):
+        kind = "docx"
     if not kind:
         return
     zone = classify(rel, cfg)
     if zone is None:
         return  # outside manuscript/notes => not prose
-    text = open(path, encoding="utf-8", errors="replace").read()
-    check_file_shapes(rel.replace(os.sep, "/"), text, cfg, findings)
-    if kind == "tex":
-        check_modularity(rel, text, cfg, findings)
-        if xref_acc is not None:
-            check_latex_structure(rel, text, cfg, findings, xref_acc)
-    fw = check_prose_file(root, rel, text, kind, zone, cfg, findings, bib_keys)
+    text = doc = None
+    if kind == "docx":
+        if os.path.basename(rel).startswith("~$"):
+            return  # Word owner-lock temp file, not a manuscript
+        import ooxml
+        try:
+            doc = ooxml.load(path)
+        except ooxml.DocxError as e:
+            findings.append(Finding("error", "O-FIELD", rel, 0,
+                                    f"cannot parse .docx: {e}"))
+            return
+        check_docx_structure(rel, doc, cfg, findings)
+        check_docx_citations(rel, doc, cfg, findings, bib_entries)
+    else:
+        text = open(path, encoding="utf-8", errors="replace").read()
+        check_file_shapes(rel.replace(os.sep, "/"), text, cfg, findings)
+        if kind == "tex":
+            check_modularity(rel, text, cfg, findings)
+            if xref_acc is not None:
+                check_latex_structure(rel, text, cfg, findings, xref_acc)
+    fw = check_prose_file(root, rel, text, kind, zone, cfg, findings,
+                          bib_keys, doc=doc)
     if chapter_acc is not None and zone == "manuscript" and fw is not None:
         d = os.path.dirname(rel.replace(os.sep, "/"))
         ch = chapter_acc.setdefault(
@@ -1197,7 +1370,8 @@ def main():
     chapter_acc = {}
     xref_acc = {"labels": {}, "refs": {}, "files": 0}
     for f in targets:
-        check_file(root, f, cfg, findings, bib_keys, chapter_acc, xref_acc)
+        check_file(root, f, cfg, findings, bib_keys, chapter_acc, xref_acc,
+                   bib_entries=entries)
     check_chapter_density(cfg, chapter_acc, findings)
     finalize_xref(cfg, xref_acc, findings)
 

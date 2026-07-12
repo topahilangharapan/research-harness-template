@@ -21,6 +21,7 @@ tells you how to make changes that pass it, in the right order.
 |---|---|---|
 | Policy | `harness/` fragments + `harness/presets/` + `harness/rules.d/` | WHAT is enforced (the only place rules live) |
 | Engine | `.harness/engine/validate.py`, `.harness/engine/citecheck.py`, `.harness/engine/doctor.py` | HOW rules are checked (generic; changes rarely) |
+| Docx engine | `.harness/engine/ooxml.py` (parser), `.harness/engine/docxtool.py` (edit CLI), `harness/65-docx.json` (policy) | .docx manuscripts: extraction, editing, citation-field policy |
 | Claude hooks | `.harness/hooks/` + `.harness/claude-settings-hooks.json` | Enforcement at tool-call time |
 | Git gate | `.githooks/pre-commit` | Enforcement at commit time |
 | CI | `.github/workflows/harness.yml` | Enforcement at push/PR time |

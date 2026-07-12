@@ -27,7 +27,8 @@ import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from validate import repo_root, load_config, parse_bibs  # noqa: E402
+from validate import (repo_root, load_config, parse_bibs,  # noqa: E402
+                      collect_all, relpath)
 
 UA = {"User-Agent": "paramasastra-citecheck/1.0 (mailto:none@example.com)"}
 
@@ -91,14 +92,63 @@ def verify_isbn(isbn, title, threshold):
     return True, "ok"
 
 
+def report_docx(root, cfg):
+    """Offline audit: every native citation field across the governed
+    .docx manuscripts with its bib match status. The validator already
+    fails on O-CITE/O-FIELD; this is the human-readable overview."""
+    import ooxml
+    th = float(cfg.get("docx", {}).get("citations", {})
+               .get("title_match_threshold", 0.85))
+    _, entries = parse_bibs(root, cfg)
+    failures = total = 0
+    for f in collect_all(root, cfg):
+        if not f.lower().endswith(".docx") or \
+                os.path.basename(f).startswith("~$"):
+            continue
+        rel = relpath(root, f)
+        try:
+            doc = ooxml.load(f)
+        except ooxml.DocxError as e:
+            print(f"[FAIL] {rel}: {e}")
+            failures += 1
+            continue
+        for fld in doc.fields:
+            total += 1
+            loc = ("footnote" if fld.location == "footnote"
+                   else f"para {fld.para_index}")
+            ident = "; ".join((i.get("doi") or i.get("isbn")
+                               or (i.get("title") or "")[:50] or "?")
+                              for i in fld.items) or fld.tag or "?"
+            if fld.broken:
+                print(f"[FAIL] {rel} {loc}: BROKEN field ({fld.reason})")
+                failures += 1
+                continue
+            keys = [match_bib_key for match_bib_key, _ in
+                    (ooxml.match_bib(i, entries, th)
+                     for i in (fld.items or [{}]))]
+            if all(keys):
+                print(f"[PASS] {rel} {loc}: {ident} -> {', '.join(keys)}")
+            else:
+                print(f"[FAIL] {rel} {loc}: {ident} -> UNMATCHED "
+                      "(no references.bib entry)")
+                failures += 1
+    print(f"citecheck --docx: {total} field(s), {failures} failure(s)")
+    sys.exit(1 if failures else 0)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--online", action="store_true",
                     help="verify DOIs/ISBNs against Crossref/OpenLibrary")
+    ap.add_argument("--docx", action="store_true",
+                    help="audit native citation fields in governed .docx "
+                         "manuscripts against the bib (offline)")
     args = ap.parse_args()
 
     root = repo_root()
     cfg = load_config(root)
+    if args.docx:
+        report_docx(root, cfg)
     cit = cfg.get("citations", {})
     von = cit.get("verify_online", {})
     threshold = float(von.get("title_match_threshold", 0.75))

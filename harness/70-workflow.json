@@ -21,8 +21,13 @@
     // build.log, and manifest.json (git commit, validation status).
     // validate_first is THE GATE: no PDF from a manuscript that fails
     // the validator (--force overrides loudly, recorded in manifest).
+    // DOCX projects: set main to the .docx — the build then snapshots
+    // the validated file into the versioned folder and, when
+    // LibreOffice is installed, also exports a PDF via docx_command
+    // (no soffice => snapshot only, still a successful build).
     "build": {
       "command": "latexmk -pdf -interaction=nonstopmode -output-directory={out} {main}",
+      "docx_command": "soffice --headless --convert-to pdf --outdir {out} {main}",
       "main": "main.tex",
       "dir": "build/",
       "validate_first": true

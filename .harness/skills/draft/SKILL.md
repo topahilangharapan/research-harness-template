@@ -70,6 +70,28 @@ re-checks each file you touch, automatically, and blocks violations.
    errors required, and no marker may remain in anything you consumed.
    Then report: files changed, sources cited, warnings remaining.
 
+## DOCX targets
+
+For Word manuscripts, all editing goes through
+`.harness/engine/docxtool.py` (Edit/Write are blocked on .docx):
+
+- Read briefs: `docxtool.py cat <file>` (marker paragraphs are tagged
+  `[MARKER]`); inspect one paragraph with `show <file> N`.
+- Write prose: `insert <file> N --text "..."` for new paragraphs;
+  `replace <file> N --text "..."` for rewrites. THE PLACEHOLDER
+  CONTRACT: if a paragraph contains citation fields, `show` renders
+  them as `{{field:k}}` and your replacement text must carry every one
+  exactly once — the tool refuses otherwise, so a rewrite cannot drop
+  a citation.
+- Cite: `add-cite <file> N --key <bibkey>` appends a native
+  Zotero-compatible field (key must exist in the bib; the tool refuses
+  unknown keys). If `docx.citations.allow_generated_fields` is false,
+  leave a `@TODOCITE` marker paragraph for the human instead.
+- Consume markers: after drafting a brief, `delete <file> N` removes
+  the marker paragraph; ORIGINAL/DELETE blocks are removed the same way.
+- The tool validates after every edit (exit 2 = fix the findings before
+  continuing — same contract as the per-edit hook).
+
 ## Hard rules
 
 - Never invent a reference. No source → blocker → ask. The citation

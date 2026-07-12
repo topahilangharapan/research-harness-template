@@ -1,0 +1,41 @@
+{
+  // Microsoft Word manuscripts: .docx files inside manuscript_paths are
+  // governed exactly like .tex — prose rules, citation policy, workflow
+  // markers. A .docx is a zip of XML, so Edit/Write are BLOCKED on it;
+  // all editing goes through .harness/engine/docxtool.py (cat / show /
+  // outline / cites / replace / insert / delete / add-cite / new).
+  // The validator's "line" for a .docx is the 1-based paragraph index.
+  "formats": { "docx": true },
+
+  "docx": {
+    "citations": {
+      // Citations are NATIVE fields only — Zotero/Mendeley
+      // (ADDIN ... CSL_CITATION) or Word CITATION fields. Each cited
+      // item must resolve to a references.bib entry (matched by DOI,
+      // then ISBN, then fuzzy title). Plain-text [@key] / [12] warns.
+      "require_native_fields": true,
+      "title_match_threshold": 0.85,
+      "unmatched_severity": "error",     // O-CITE: no bib entry matches
+      "unparseable_severity": "error",   // O-FIELD: damaged field
+      "allow_generated_fields": true     // docxtool add-cite may synthesize
+    },
+
+    // O-STRUCT — heading contracts (the file_shapes / L-MODULAR analog).
+    // Levels come from outline levels, never localized style names.
+    "structure": {
+      "enabled": true,
+      "max_h1_per_file": 1,              // one chapter/document per file
+      "no_heading_skips": "warn",        // H1 -> H3 jump
+      "severity": "error"
+      // "required_headings": ["^Introduction$", ...]  // optional regexes
+    },
+
+    // Workflow-marker paragraphs get this visible shaded style so a
+    // human opening the file in Word sees unresolved work:
+    "markers": { "style": "HarnessMarker" },
+
+    // Outline levels that bound the 'section' density scope
+    // (mirrors \chapter/\section scoping in LaTeX):
+    "density_section_levels": [1, 2]
+  }
+}

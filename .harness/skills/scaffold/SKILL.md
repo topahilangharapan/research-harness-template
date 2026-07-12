@@ -84,6 +84,21 @@ Each @TODO must state: what to write, which source keys support it, and
 a minimum length. An instruction the draft skill cannot execute without
 asking questions is a defective instruction.
 
+## DOCX targets
+
+For Word manuscripts (`formats.docx`), never Edit/Write the file — the
+gate blocks it. Drive `.harness/engine/docxtool.py` instead:
+
+1. `python3 .harness/engine/docxtool.py new <file>.docx --title "..."`
+   (one chapter/document per file — O-STRUCT allows one H1).
+2. Structure: `docxtool.py insert <file> 0 --text "Heading" --heading 2`
+   (levels come from outline levels; inspect with `outline`).
+3. Briefs: `docxtool.py insert <file> N --text "@TODO ..." --marker` —
+   marker paragraphs are visibly shaded in Word and exempt from prose
+   rules; same @TODO/@TODOCITE content contract as the comment form.
+   The LaTeX one-section-per-file rule does not apply; heading
+   contracts (`docx.structure`) are the analog.
+
 ## Hard rules
 
 - NO prose, ever — instructions only. If you catch yourself writing a
