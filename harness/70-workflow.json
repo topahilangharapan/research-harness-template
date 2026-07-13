@@ -55,7 +55,12 @@
       "defend":         ["grill me", "defend", "viva", "defense prep",
                          "mock exam", "quiz me"],
       "update-harness": ["update the harness", "harness rule",
-                         "add a rule", "change the policy"]
+                         "add a rule", "change the policy"],
+      // Bare "setup" is deliberately absent: it would false-fire on
+      // prompts like "setup a figure environment". /setup still works.
+      "setup":          ["set up the project", "setup the project",
+                         "initialize the template", "initialize the project",
+                         "new project from template", "configure this template"]
     }
   }
 }

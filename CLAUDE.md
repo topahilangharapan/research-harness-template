@@ -33,6 +33,10 @@ work around a block.
 
 ## Writing workflow
 
+On a fresh clone of the template, run **setup** first: it interviews for
+the project's identity and rewrites every placeholder (project name,
+scope statement, title, author) across the config.
+
 Manuscript work goes through the lifecycle skills (in `.claude/skills/`
 after install): **scaffold** (structure + @TODO briefs for new content) →
 **draft** (prose) → **review** (audit + triage). Changes to written

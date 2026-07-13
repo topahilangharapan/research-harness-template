@@ -33,14 +33,16 @@ enforced as law, not suggested as style.
 gh repo create my-new-paper --template topahilangharapan/paramasastra --private --clone
 cd my-new-paper
 
-# 2. Edit the config fragments in harness/:
+# 2. Install enforcement (hooks, skills, slash commands)
+bash scripts/install-harness.sh
+
+# 3. Open Claude Code and run /setup: it interviews you once and fills
+#    every project-specific value (name, scope, title, author, ...).
+#    Manual alternative: edit the config fragments in harness/ yourself:
 #    - 00-project.json  -> name, manuscript_paths (where the paper lives)
 #    - 50-scope.json    -> scope statement (+ deny_keywords)
 #    - 40-citations.json-> bib files, allowed types, required fields
 #    - harness/rules.d/ -> drop in any custom rules
-
-# 3. Install enforcement
-bash scripts/install-harness.sh
 ```
 
 ## Config layout (configurable · maintainable · scalable)
@@ -130,7 +132,7 @@ Add an enforcement step by appending its id to
 
 ## Included skills (the writing workflow)
 
-Six skills ship in `.harness/skills/` (installed into `.claude/skills/` by
+Eight skills ship in `.harness/skills/` (installed into `.claude/skills/` by
 the installer). Five form the manuscript lifecycle; markers declared in
 `harness/70-workflow.json` carry the handoff between them, and the engine
 enforces the contract (E-MARKER: broken pairs are errors; the review gate
@@ -138,6 +140,7 @@ runs `--strict-markers` where any leftover marker is an error):
 
 | Skill | Role | Writes prose? |
 |---|---|---|
+| `setup` | One-time project initialization from the template: interview, rewrite placeholders (project name, scope, title, author), verify | No |
 | `scaffold` | Design structure of NEW content: headings, labels, source mapping, @TODO briefs | No — instructions only |
 | `draft` | Turn @TODO briefs and @EDIT markers into citation-backed prose | Yes |
 | `review` | Read-only audit: mechanical pass (validator + citecheck) + judgment pass, then one-by-one interactive triage | No (mechanical fixes only after triage approval) |
