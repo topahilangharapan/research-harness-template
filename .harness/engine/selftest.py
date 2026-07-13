@@ -230,6 +230,66 @@ def run_docxtool_case():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def run_namespace_preservation_case():
+    """Real Word documents declare a long list of namespaces (w14, w15,
+    wp14, ...) on the root and list some of them in mc:Ignorable even
+    when nothing in the body currently uses them. ET.tostring only
+    redeclares a namespace it detects as still in use post-edit, so a
+    naive save silently drops the unused-but-declared ones, leaving
+    mc:Ignorable pointing at prefixes with no xmlns — Word then reports
+    the file as unreadable. Prove a docxtool edit keeps every original
+    root namespace declaration intact."""
+    import zipfile
+    import ooxml
+    tmp = tempfile.mkdtemp()
+    try:
+        shutil.copytree(os.path.join(TEMPLATE_ROOT, "harness"),
+                        os.path.join(tmp, "harness"))
+        os.makedirs(os.path.join(tmp, "references", "book"))
+        with open(os.path.join(tmp, "references", "book", "ok.pdf"), "w") as f:
+            f.write("x")
+        with open(os.path.join(tmp, "references.bib"), "w") as f:
+            f.write(GOOD_BIB)
+        os.makedirs(os.path.join(tmp, "paper", "s"))
+        p = os.path.join(tmp, "paper", "s", "x.docx")
+        ooxml.new_docx(p)
+        document_xml = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:w="{ooxml.W}" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" mc:Ignorable="w14 w15 wp14">
+<w:body>
+<w:p w14:paraId="12345678" w:rsidR="00AA1234"><w:r><w:t>Original text.</w:t></w:r></w:p>
+<w:sectPr/>
+</w:body>
+</w:document>"""
+        with zipfile.ZipFile(p) as z:
+            members = {i.filename: z.read(i.filename) for i in z.infolist()}
+        members["word/document.xml"] = document_xml.encode("utf-8")
+        with zipfile.ZipFile(p, "w", zipfile.ZIP_DEFLATED) as z:
+            for name, data in members.items():
+                z.writestr(name, data)
+        env = dict(os.environ, CLAUDE_PROJECT_DIR=tmp)
+        dt = [sys.executable, os.path.join(HERE, "docxtool.py")]
+        r = subprocess.run(dt + ["replace", p, "1", "--text",
+                                 "Edited text."],
+                           capture_output=True, text=True, env=env,
+                           timeout=120)
+        if r.returncode != 0:
+            return (f"FAIL namespace preservation: replace should pass, "
+                    f"got {r.returncode}:\n{r.stdout}{r.stderr}")
+        with zipfile.ZipFile(p) as z:
+            after = z.read("word/document.xml").decode("utf-8")
+        start = after.index("<w:document")
+        root_tag = after[start:after.index(">", start) + 1]
+        missing = [pfx for pfx in ("w14", "w15", "wp14")
+                   if f'xmlns:{pfx}="' not in root_tag]
+        if missing:
+            return (f"FAIL namespace preservation: dropped xmlns for "
+                    f"{missing} still named in mc:Ignorable — Word "
+                    f"would reject this file:\n{root_tag}")
+        return None
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main():
     failures = []
     for name, files, args, expected in CASES:
@@ -242,7 +302,12 @@ def main():
     print(f"[{'ok ' if not err else 'FAIL'}] docxtool: placeholder contract")
     if err:
         failures.append(err)
-    total = len(CASES) + 1
+    err = run_namespace_preservation_case()
+    print(f"[{'ok ' if not err else 'FAIL'}] "
+          "docxtool: namespace preservation")
+    if err:
+        failures.append(err)
+    total = len(CASES) + 2
     print(f"\nselftest: {total - len(failures)}/{total} "
           "enforcement(s) verified")
     if failures:

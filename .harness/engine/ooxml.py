@@ -134,8 +134,35 @@ def _serialize(root, ns):
     for prefix, uri in ns:
         ET.register_namespace(prefix, uri)
     xml = ET.tostring(root, encoding="unicode")
+    xml = _restore_root_namespaces(xml, ns)
     return ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'
             + xml).encode("utf-8")
+
+
+def _restore_root_namespaces(xml, ns):
+    """ET.tostring only redeclares a namespace if some surviving tag or
+    attribute still uses its URI, silently dropping declarations that
+    became unused after an edit (e.g. deleting the last w15:-prefixed
+    element). But Word declares every namespace it might ever need on
+    the root regardless of whether the current content uses it, and
+    prefix-list attributes like mc:Ignorable="w14 w15 wp14" name those
+    prefixes as plain text — untouched by ET, since it isn't a QName.
+    A dropped declaration leaves such a prefix dangling, which Word's
+    strict parser rejects as unreadable content. Re-declaring the
+    original root namespaces unconditionally is always safe (a root
+    xmlns applies to every descendant) and keeps every part byte-
+    identical to Word's own output whenever nothing was actually
+    trimmed."""
+    end = xml.index(">")
+    head = xml[:end]
+    missing = []
+    for prefix, uri in ns:
+        attr = f"xmlns:{prefix}=" if prefix else "xmlns="
+        if attr not in head:
+            missing.append(f' {attr}"{uri}"')
+    if not missing:
+        return xml
+    return head + "".join(missing) + xml[end:]
 
 
 def _style_outline_map(styles_root):
